@@ -9,7 +9,7 @@ val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "[
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "1.0.6"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "2.1.0"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "2.1.5"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
-    name := "geocoding-secondary",
+    name := "secondary-watcher-geocoding",
     libraryDependencies ++= Seq(
       astyanaxCassandra,
       astyanaxThrift,

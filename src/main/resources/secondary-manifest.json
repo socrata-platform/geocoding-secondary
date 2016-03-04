@@ -1,4 +1,4 @@
 {
   "class" : "com.socrata.geocodingsecondary.GeocodingSecondary",
-  "name" : "geocoding-secondary"
+  "name" : "geocoding"
 }
