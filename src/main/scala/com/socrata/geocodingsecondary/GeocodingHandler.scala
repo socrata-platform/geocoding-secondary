@@ -7,7 +7,7 @@ import com.socrata.datacoordinator.secondary
 import com.socrata.datacoordinator.secondary._
 import com.socrata.datacoordinator.secondary.feedback.{ComputationFailure, CookieSchema, ComputationHandler, RowComputeInfo}
 import com.socrata.geocoders.{LatLon, Geocoder, Address}
-import com.socrata.soql.types.{SoQLNumber, SoQLText, SoQLType, SoQLValue}
+import com.socrata.soql.types._
 
 case class GeocodeRowInfo(address: Address, data: secondary.Row[SoQLValue], targetColId: UserColumnId) extends RowComputeInfo[SoQLValue]
 
@@ -52,6 +52,7 @@ class GeocodingHandler(geocoder: Geocoder, retries: Int) extends ComputationHand
         row.get(new ColumnId(cookie.columnIdMap(id))) match {
           case Some(SoQLText(text)) => Some(text)
           case Some(SoQLNumber(number)) => if (canBeNumber) Some(number.toString) else wrongSoQLType(SoQLNumber)
+          case Some(SoQLNull) => None
           case Some(other) => wrongSoQLType(other)
           case None => None
         }
