@@ -5,11 +5,11 @@ val astyanaxVersion =  "1.56.48"
 val astyanaxCassandra = astyanaxExcludes("com.netflix.astyanax" % "astyanax-cassandra" % astyanaxVersion)
 val astyanaxThrift = astyanaxExcludes("com.netflix.astyanax" % "astyanax-thrift" % astyanaxVersion)
 
-val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "[3.2.0,4.0.0)"
+val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "3.5.0"
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "1.0.6"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "2.1.12"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "2.1.13"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
