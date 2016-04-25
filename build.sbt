@@ -7,9 +7,9 @@ val astyanaxThrift = astyanaxExcludes("com.netflix.astyanax" % "astyanax-thrift"
 
 val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "3.5.0"
 
-val geocoders               = "com.socrata" %% "geocoders"                  % "1.0.6"
+val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.0"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.1"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.5"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
@@ -21,7 +21,6 @@ val typesafeConfig          = "com.typesafe" % "config"                     % "1
 
 lazy val commonSettings = Seq(
   organization := "com.socrata",
-  version := "0.0.0",
   scalaVersion := "2.10.4"
 )
 
