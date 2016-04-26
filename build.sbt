@@ -9,7 +9,7 @@ val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "3
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "1.0.6"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "2.1.13"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.1"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
