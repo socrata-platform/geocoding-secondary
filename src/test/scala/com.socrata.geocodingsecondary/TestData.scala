@@ -43,91 +43,90 @@ object TestData {
   val emptySourceColumnIds = Seq.empty
   val sourceColumnIds = sourceColumns.map(_.userId)
 
+  def parametersSchema(sources: JObject, defaults: JObject) = JObject(Map(
+    "sources" -> sources,
+    "defaults" -> defaults,
+    "version" -> JString("v1")
+  ))
+
+  val baseAddressDefaults = JObject(Map(
+    "country" -> JString("US"))
+  )
+
   // parameters
-  val emptyParameters = JObject(Map(
-    "country_default" -> JString("US")
-  ))
+  val emptyParameters = parametersSchema(JObject.canonicalEmpty, baseAddressDefaults)
 
-  val parameters = JObject(Map(
+  val fullAddressSource = JObject(Map(
     "address" -> JString(address.userId.underlying),
     "locality" -> JString(locality.userId.underlying),
     "region" -> JString(region.userId.underlying),
     "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "country_default" -> JString("US")
+    "country" -> JString(country.userId.underlying)
   ))
 
-  val parametersNoPostalCode = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "country_default" -> JString("US")
-  ))
+  val parameters = parametersSchema(fullAddressSource, baseAddressDefaults)
 
-  val parametersNoCountry = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country_default" -> JString("US")
-  ))
+  val parametersNoPostalCode = parametersSchema(
+    JObject(Map(
+      "address" -> JString(address.userId.underlying),
+      "locality" -> JString(locality.userId.underlying),
+      "region" -> JString(region.userId.underlying),
+      "country" -> JString(country.userId.underlying))),
+    baseAddressDefaults
+  )
 
-  val parametersDefaultRegion = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "region_default" -> JString("WA"),
-    "country_default" -> JString("US")
-  ))
+  val parametersNoCountry = parametersSchema(
+    JObject(Map(
+      "address" -> JString(address.userId.underlying),
+      "locality" -> JString(locality.userId.underlying),
+      "region" -> JString(region.userId.underlying),
+      "postal_code" -> JString(postalCode.userId.underlying))),
+    baseAddressDefaults
+  )
 
-  val parametersOnlyDefaultRegion = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "region_default" -> JString("WA"),
-    "country_default" -> JString("US")
-  ))
+  val defaultRegion = JObject(Map(
+    "region" -> JString("WA"),
+    "country" -> JString("US"))
+  )
 
-  val parametersDefaultCountry = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "country_default" -> JString("United States")
-  ))
+  val parametersDefaultRegion = parametersSchema(
+    fullAddressSource,
+    defaultRegion
+  )
 
-  val parametersOnlyDefaultCountry = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country_default" -> JString("United States")
-  ))
+  val parametersOnlyDefaultRegion = parametersSchema(
+    JObject(Map(
+      "address" -> JString(address.userId.underlying),
+      "locality" -> JString(locality.userId.underlying),
+      "postal_code" -> JString(postalCode.userId.underlying),
+      "country" -> JString(country.userId.underlying))),
+    defaultRegion
+  )
 
   val parametersWithExtra = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JString(region.userId.underlying),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "country_default" -> JString("US"),
-    "extra" -> JNull
+    "sources" -> JObject(Map(
+      "address" -> JString(address.userId.underlying),
+      "locality" -> JString(locality.userId.underlying),
+      "region" -> JString(region.userId.underlying),
+      "postal_code" -> JString(postalCode.userId.underlying),
+      "extra" -> JNumber(5))),
+    "defaults" -> JObject(Map(
+      "country" -> JString("US"),
+      "extra" -> JNull)),
+    "version" -> JString("v1"),
+    "extra" -> JNull,
+    "extra1" -> JString("extra")
   ))
 
-  val parametersMalformed = JObject(Map(
-    "address" -> JString(address.userId.underlying),
-    "locality" -> JString(locality.userId.underlying),
-    "region" -> JNumber(666),
-    "postal_code" -> JString(postalCode.userId.underlying),
-    "country" -> JString(country.userId.underlying),
-    "country_default" -> JString("US"),
-    "extra" -> JNull
-  ))
+  val parametersMalformed = parametersSchema(
+    JObject(Map(
+      "address" -> JString(address.userId.underlying),
+      "locality" -> JString(locality.userId.underlying),
+      "region" -> JNumber(666),
+      "postal_code" -> JString(postalCode.userId.underlying),
+      "country" -> JString(country.userId.underlying))),
+    baseAddressDefaults
+  )
 
   def cookieSchema(strategyInfo: ComputationStrategyInfo) = CookieSchema(
     dataVersion = DataVersion(44),

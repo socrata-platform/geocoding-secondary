@@ -114,16 +114,6 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     handler.transform(socrataRowNoRegion, targetColId, strategy, cookieSchema(strategy)) should be (expected)
   }
 
-  test("Should transform a row using a default country parameter") {
-    val strategy1 = strategyInfo(sourceColumnIds, parametersDefaultCountry)
-    val expected1 = GeocodeRowInfo(socrataAddressUnitedStates, socrataRowUnitedStates, targetColId)
-    handler.transform(socrataRowUnitedStates, targetColId, strategy1, cookieSchema(strategy1)) should be (expected1)
-
-    val strategy2 = strategyInfo(sourceColumnIds, parametersOnlyDefaultCountry)
-    val expected2 = GeocodeRowInfo(socrataAddressUnitedStates, socrataRowNullCountry, targetColId)
-    handler.transform( socrataRowNullCountry, targetColId, strategy2, cookieSchema(strategy2)) should be (expected2)
-  }
-
   test("Should transform a row with extra parameters") {
     val strategy = strategyInfo(sourceColumnIds, parametersWithExtra)
     val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId)

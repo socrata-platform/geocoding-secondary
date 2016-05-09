@@ -14,26 +14,26 @@ For a _geocoded_ computed column
 * source columns must be `text` columns.\*
 
 The computation strategy has the following _required_\*\* parameter:
-* `"country_default"`: country address default value
+* `"defaults.country"`: country address default value
 
-\*\* A customer can set a domain wide default for `country_default` which will be used unless it is overridden at the computation strategy level. If there is no domain default and the parameter is not provided to the computation strategy, it will be inserted with value `"US"`.
+\*\* A customer can set a domain wide default for `defaults.country` which will be used unless it is overridden at the computation strategy level. If there is no domain default and the parameter is not provided to the computation strategy, it will be inserted with value `"US"`.
 
 And the following _optional_ parameters:
 
 Source columns:
-* `"address"`: field name of the address source column
-* `"locality"`: field name of the locality source column
-* `"subregion"`: field name of the subregion source column
-* `"region"`: field name of the region source column
-* `"postal_code"`: field name of the postal code source column
-* `"country"`: field name of country source column
+* `"sources.address"`: field name of the address source column
+* `"sources.locality"`: field name of the locality source column
+* `"sources.subregion"`: field name of the subregion source column
+* `"sources.region"`: field name of the region source column
+* `"sources.postal_code"`: field name of the postal code source column
+* `"sources.country"`: field name of country source column
 
 Default values:
-* `"address_default"`: address default value
-* `"locality_default"`: locality default value
-* `"subregion_default"`: subregion default value
-* `"region_default"`: region default value
-* `"postal_code_default"`: postal code default value
+* `"defaults.address"`: address default value
+* `"defaults.locality"`: locality default value
+* `"defaults.subregion"`: subregion default value
+* `"defaults.region"`: region default value
+* `"defaults.postal_code"`: postal code default value
 
 The source column field names in the `computationStrategy.source_columns` and `computationStrategy.parameters` must match, further those columns must exist and cannot be deleted until the computed column is first deleted.
 
@@ -54,12 +54,16 @@ For example:
     "type": "geocoding",
     "source_columns": [ "street_address", "city", "state", "zip_code"],
     "parameters": {
-      "address": "street_address",
-      "locality": "city",
-      "region": "state",
-      "postal_code": "zip_code",
-      "region_default": "WA",
-      "country_default": "US",
+      "sources": {
+        "address": "street_address",
+        "locality": "city",
+        "region": "state",
+        "postal_code": "zip_code"
+      },
+      "defaults": {
+        "region": "WA",
+        "country": "US"
+      },
       "version": "v1"
     }
   }
