@@ -1,8 +1,8 @@
 package com.socrata.geocodingsecondary
 
-import com.rojoma.json.v3.codec.DecodeError
-import com.rojoma.json.v3.util.{Strategy, JsonKeyStrategy, AutomaticJsonCodecBuilder, WrapperFieldCodec}
+import com.rojoma.json.v3.codec.{JsonDecode, DecodeError}
 import com.rojoma.json.v3.ast.{JNull, JString, JValue}
+import com.socrata.computation_strategies.{StrategyType => ST, GeocodingParameterSchema}
 import com.socrata.datacoordinator.id.{StrategyType, ColumnId, UserColumnId}
 import com.socrata.datacoordinator.secondary
 import com.socrata.datacoordinator.secondary._
@@ -18,36 +18,10 @@ class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends Computa
 
   override def computationRetries: Int = retries
 
-  override def matchesStrategyType(typ: StrategyType): Boolean = typ.underlying == "geocoding"
-
-
-  case class ParameterSchema(sources: Sources, defaults: Defaults, version: String)
-
-  @JsonKeyStrategy(Strategy.Underscore)
-  case class Sources(address: Option[UserColumnId],
-                     locality: Option[UserColumnId],
-                     subregion: Option[UserColumnId],
-                     region: Option[UserColumnId],
-                     postalCode: Option[UserColumnId],
-                     country: Option[UserColumnId])
-
-  @JsonKeyStrategy(Strategy.Underscore)
-  case class Defaults(address: Option[String],
-                      locality: Option[String],
-                      subregion: Option[String],
-                      region: Option[String],
-                      postalCode: Option[String],
-                      country: String)
-
-  object ParameterSchema {
-    implicit val userColumnIdCodec = WrapperFieldCodec[UserColumnId](new UserColumnId(_), _.underlying)
-    implicit val sourcesCodec = AutomaticJsonCodecBuilder[Sources]
-    implicit val defaultsCodec = AutomaticJsonCodecBuilder[Defaults]
-    implicit val parameterSchemaCodec = AutomaticJsonCodecBuilder[ParameterSchema]
-  }
+  override def matchesStrategyType(typ: StrategyType): Boolean = typ.underlying == ST.Geocoding.name
 
   override def transform(row: Row[SoQLValue], targetColId: UserColumnId, strategy: ComputationStrategyInfo, cookie: CookieSchema): GeocodeRowInfo = {
-    val parameters = ParameterSchema.parameterSchemaCodec.decode(strategy.parameters) match {
+    val parameters = JsonDecode[GeocodingParameterSchema[UserColumnId]].decode(strategy.parameters) match {
       case Right(result) => result
       case Left(error) => throw new MalformedParametersException(error)
     }
@@ -90,11 +64,6 @@ class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends Computa
         }
       case None => None
     }
-  }
-
-  private def applyDefault(value: Option[String], default: Option[String]): Option[String] = {
-    if (value.isDefined) value
-    else default
   }
 
   override def compute(sources: Iterator[(GeocodeRowInfo, Int)]): Iterator[((GeocodeRowInfo, JValue), Int)] = {

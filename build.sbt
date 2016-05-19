@@ -7,6 +7,8 @@ val astyanaxThrift = astyanaxExcludes("com.netflix.astyanax" % "astyanax-thrift"
 
 val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "3.5.0"
 
+val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0.0.2"
+
 val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.0"
 
 val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.5"
@@ -32,6 +34,7 @@ lazy val root = (project in file(".")).
       astyanaxCassandra,
       astyanaxThrift,
       rojomaJsonV3,
+      computationStrategies,
       geocoders,
       dataCoordinator,
       socrataCuratorUtils,

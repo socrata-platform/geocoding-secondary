@@ -16,7 +16,7 @@ For a _geocoded_ computed column
 The computation strategy has the following _required_\*\* parameter:
 * `"defaults.country"`: country address default value
 
-\*\* A customer can set a domain wide default for `defaults.country` which will be used unless it is overridden at the computation strategy level. If there is no domain default and the parameter is not provided to the computation strategy, it will be inserted with value `"US"`.
+\*\* A superadmin can set a [domain wide default](https://github.com/socrata-platform/geocoding-secondary/blob/aerust/EN-4817/README.md#domain-wide-defaults) for `defaults.country` which will be used unless it is overridden at the computation strategy level. If there is no domain default and the parameter is not provided to the computation strategy, it will be inserted with value `"US"`.
 
 And the following _optional_ parameters:
 
@@ -71,6 +71,23 @@ For example:
 ```
 
 \* `postal_code` source columns may be `number` columns, but really postal codes _should_ be of type `text`.
+
+##### Domain Wide Defaults
+A superadmin can set a domain wide default for any of the default values. These domain wide default values will be used unless overridden in a computation strategy.
+
+These can be set through the admin panel by providing the property to the `"geocoding"` configuration:
+
+* key: `"defaults"`  
+* value:
+  A json object with the optional fields:
+  - `"address"`
+  - `"locality"`
+  - `"subregion"`
+  - `"region"`
+  - `"postal_code"`
+  - `"country"`
+
+Setting a domain wide default for `"country"` is encouraged as otherwise `"computationStrategy.defaults.country"` will be defaulted to `"US"`.
 
 ## Running
 To run the tests
