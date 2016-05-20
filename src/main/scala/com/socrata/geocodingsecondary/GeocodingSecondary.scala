@@ -22,12 +22,12 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   val keyspace = res(AstyanaxFromConfig.unmanaged(config.cassandra))
   guarded(keyspace.start())
 
-  val geocoderProvider = locally {
+  val geocoderProvider: OptionalGeocoder = locally {
     val geoConfig = config.geocoder
 
-    def baseProvider = geoConfig.mapQuest match {
+    def baseProvider: BaseGeocoder = geoConfig.mapQuest match {
       case Some(e) => new MapQuestGeocoder(httpClient, e.appToken, { (_, _) => }) // retry count defaults to 5
-      case None => NoopGeocoder
+      case None => log.warn("No MapQuest config provided; using {}.", BaseNoopGeocoder.getClass); BaseNoopGeocoder
     }
 
     def provider: Geocoder = {
@@ -35,14 +35,13 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
         case Some(cacheConfig) =>
           new CassandraCacheClient(keyspace.getClient, cacheConfig.columnFamily, cacheConfig.ttl)
         case None =>
+          log.warn("No cache config provided; using {}.", NoopCacheClient.getClass)
           NoopCacheClient
       }
-      geoConfig.cache.fold(baseProvider) { cacheConfig =>
-        new CachingGeocoderAdapter(cache, baseProvider, { _ => }, geoConfig.filterMultipier)
-      }
+      new CachingGeocoderAdapter(cache, baseProvider, { _ => }, geoConfig.filterMultipier)
     }
 
-    provider
+    new OptionRemoverGeocoder(provider, multiplier = 1 /* we don't want to batch filtering out Nones */)
   }
 
   override val computationHandler: ComputationHandler[SoQLType, SoQLValue, GeocodeRowInfo] =
