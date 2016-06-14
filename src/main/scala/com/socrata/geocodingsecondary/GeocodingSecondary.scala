@@ -11,7 +11,7 @@ import com.socrata.soql.types.{SoQLValue, SoQLType}
 import com.socrata.thirdparty.astyanax.AstyanaxFromConfig
 import com.typesafe.config.{ConfigFactory, Config}
 
-class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecondaryInstance[GeocodeRowInfo](config) {
+class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecondaryInstance(config) {
   // SecondaryWatcher will give me a config, but just in case fallback to config from my jar file
   def this(rawConfig: Config) = this(new GeocodingSecondaryConfig(rawConfig.withFallback(
     ConfigFactory.load(classOf[GeocodingSecondary].getClassLoader).getConfig("com.socrata.geocoding-secondary"))))
@@ -44,7 +44,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
     new OptionRemoverGeocoder(provider, multiplier = 1 /* we don't want to batch filtering out Nones */)
   }
 
-  override val computationHandler: ComputationHandler[SoQLType, SoQLValue, GeocodeRowInfo] =
-    new GeocodingHandler(geocoderProvider, config.computationRetries)
+  override val computationHandlers: Seq[ComputationHandler[SoQLType, SoQLValue]] =
+    List(new GeocodingHandler(geocoderProvider, config.computationRetries))
 
 }

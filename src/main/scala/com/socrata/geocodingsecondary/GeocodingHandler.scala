@@ -9,10 +9,12 @@ import com.socrata.datacoordinator.secondary._
 import com.socrata.datacoordinator.secondary.feedback.{ComputationFailure, CookieSchema, ComputationHandler, RowComputeInfo}
 import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
 import com.socrata.soql.types._
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Point}
 
 case class GeocodeRowInfo(address: Option[InternationalAddress], data: secondary.Row[SoQLValue], targetColId: UserColumnId) extends RowComputeInfo[SoQLValue]
 
-class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends ComputationHandler[SoQLType, SoQLValue, GeocodeRowInfo] {
+class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends ComputationHandler[SoQLType, SoQLValue] {
+  type RCI = GeocodeRowInfo
 
   override def user: String = "geocoding-secondary"
 
@@ -55,7 +57,7 @@ class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends Computa
     def wrongSoQLType(other: AnyRef): Nothing = throw new Exception(s"Expected value to be of type $SoQLText but got: $other")
     colId match {
       case Some(id) =>
-        row.get(new ColumnId(cookie.columnIdMap(id))) match {
+        row.get(cookie.columnIdMap(id)) match {
           case Some(SoQLText(text)) => Some(text)
           case Some(SoQLNumber(number)) => if (canBeNumber) Some(number.toString) else wrongSoQLType(SoQLNumber)
           case Some(SoQLNull) => None
@@ -66,9 +68,8 @@ class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends Computa
     }
   }
 
-  override def compute(sources: Iterator[(GeocodeRowInfo, Int)]): Iterator[((GeocodeRowInfo, JValue), Int)] = {
-    val sourcesSeq = sources.toSeq
-    val addresses = sourcesSeq.map { case (info, _) => info.address }
+  override def compute[RowHandle](sources: Map[RowHandle, Seq[GeocodeRowInfo]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
+    val addresses = sources.valuesIterator.flatMap(_.map(_.address)).toSeq
     val points = try {
       geocoder.geocode(addresses)
     } catch {
@@ -76,10 +77,29 @@ class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends Computa
         throw ComputationFailure(e.getMessage)
     }
 
-    sourcesSeq.zip(points).map { case ((info, index), point) =>
-      ((info, toJValue(point)), index)
-    }.toIterator
+    // ok, the reassembly will be a little interesting...
+    val (result, leftovers) =
+      sources.foldLeft((Map.empty[RowHandle, Map[UserColumnId, SoQLValue]], points)) { (accPoints, rowSources) =>
+        val (acc, points) = accPoints
+        val (row, sources) = rowSources
+        val (pointsHere, leftoverPoints) = points.splitAt(sources.length)
+        assert(pointsHere.length == sources.length, "Geocoding returned too few results?")
+        val soqlValues = (sources,pointsHere).zipped.map { (source, point) =>
+          source.targetColId -> point.fold[SoQLValue](SoQLNull) { case LatLon(lat, lon) =>
+            SoQLPoint(geometryFactory.get.createPoint(new Coordinate(lon, lat))) // Not at all sure this is correct!
+          }
+        }.toMap
+        val newAcc = acc + (row -> soqlValues)
+        (newAcc, leftoverPoints)
+      }
+    assert(leftovers.isEmpty, "Geocoding returned too many results?")
+    result
   }
+
+  private val geometryFactory =
+    new ThreadLocal[GeometryFactory] {
+      override def initialValue = new GeometryFactory
+    }
 
   private def toJValue(latLon: Option[LatLon]): JValue = latLon match {
     case Some(point) => JString(s"POINT(${point.lat} ${point.lon})")
