@@ -44,7 +44,10 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
     new OptionRemoverGeocoder(provider, multiplier = 1 /* we don't want to batch filtering out Nones */)
   }
 
+  override val retryLimit = config.computationRetries
+  override val user = "geocoding-secondary"
+
   override val computationHandlers: Seq[ComputationHandler[SoQLType, SoQLValue]] =
-    List(new GeocodingHandler(geocoderProvider, config.computationRetries))
+    List(new GeocodingHandler(geocoderProvider))
 
 }

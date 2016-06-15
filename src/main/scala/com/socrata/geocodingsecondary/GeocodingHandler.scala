@@ -13,12 +13,8 @@ import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Point}
 
 case class GeocodeRowInfo(address: Option[InternationalAddress], data: secondary.Row[SoQLValue], targetColId: UserColumnId) extends RowComputeInfo[SoQLValue]
 
-class GeocodingHandler(geocoder: OptionalGeocoder, retries: Int) extends ComputationHandler[SoQLType, SoQLValue] {
+class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[SoQLType, SoQLValue] {
   type RCI = GeocodeRowInfo
-
-  override def user: String = "geocoding-secondary"
-
-  override def computationRetries: Int = retries
 
   override def matchesStrategyType(typ: StrategyType): Boolean = typ.underlying == ST.Geocoding.name
 
