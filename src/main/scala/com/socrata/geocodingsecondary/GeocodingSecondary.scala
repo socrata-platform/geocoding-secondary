@@ -48,6 +48,6 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   override val user = "geocoding-secondary"
 
   override val computationHandlers: Seq[ComputationHandler[SoQLType, SoQLValue]] =
-    List(new GeocodingHandler(geocoderProvider))
+    List(new GeocodingHandler(geocoderProvider), new RegionCodingPointHandler, new RegionCodingStringHandler)
 
 }
