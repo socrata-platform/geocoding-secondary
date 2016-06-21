@@ -1,14 +1,24 @@
 package com.socrata.geocodingsecondary
 
+import java.io.IOException
+
 import com.rojoma.json.v3.ast._
-import com.rojoma.json.v3.codec.JsonDecode
+import com.rojoma.json.v3.codec.JsonDecode.DecodeResult
+import com.rojoma.json.v3.codec.{JsonEncode, JsonDecode}
+import com.rojoma.json.v3.io.{JsonReaderException, JValueEventIterator}
 import com.rojoma.json.v3.util.WrapperJsonCodec
+import com.socrata.curator.CuratorServiceBase
 import com.socrata.datacoordinator.id.{ColumnId, StrategyType, UserColumnId}
 import com.socrata.computation_strategies.{StrategyType => ST, GeoRegionMatchOnStringParameterSchema, GeoRegionMatchOnPointParameterSchema}
 import com.socrata.datacoordinator.secondary.{ComputationStrategyInfo, Row}
-import com.socrata.datacoordinator.secondary.feedback.{HasStrategy, CookieSchema, ComputationHandler}
+import com.socrata.datacoordinator.secondary.feedback.{ComputationFailure, HasStrategy, CookieSchema, ComputationHandler}
+import com.socrata.http.client.exceptions.HttpClientException
+import com.socrata.http.client.{RequestBuilder, HttpClient}
 import com.socrata.soql.environment.ColumnName
 import com.socrata.soql.types._
+import org.slf4j.LoggerFactory
+
+import scala.concurrent.duration.FiniteDuration
 
 case class ResourceName(underlying: String)
 object ResourceName extends (String => ResourceName) {
@@ -41,7 +51,13 @@ case class RegionCodeStringColumnInfo(strategy: ComputationStrategyInfo, targetC
 }
 
 case class RegionCodeRowInfo(data: Row[SoQLValue], targetColId: ColumnId, userTargetColId: UserColumnId, endpoint: String)
-abstract class AbstractRegionCodingHandler extends ComputationHandler[SoQLType, SoQLValue] {
+abstract class AbstractRegionCodingHandler(http: HttpClient,
+                                           baseURL: () => String,
+                                           connectTimeout: FiniteDuration,
+                                           readTimeout: FiniteDuration,
+                                           retries: Int) extends ComputationHandler[SoQLType, SoQLValue] {
+  val log = LoggerFactory.getLogger(classOf[AbstractRegionCodingHandler])
+
   override type PerDatasetData = CookieSchema
   override type PerColumnData <: AbstractRegionCodeColumnInfo
   override type PerCellData = RegionCodeRowInfo
@@ -70,10 +86,13 @@ abstract class AbstractRegionCodingHandler extends ComputationHandler[SoQLType, 
   }
 
   def computeOneEndpoint[RowHandle](endpoint: String, jobs: Map[RowHandle, Seq[PerCellData]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
-    val allCells = JArray(jobs.values.flatten.map { pcd =>
-      jsonify(pcd.data(pcd.targetColId))
-    }.toSeq)
-    val featureIds = regionCode(endpoint, allCells)
+    val allCells =
+      for {
+        pcds <- jobs.values.toSeq
+        pcd <- pcds
+      } yield jsonify(pcd.data(pcd.targetColId))
+
+    val featureIds = regionCode(endpoint, JArray(allCells))
     assert(featureIds.length == allCells.length, "Region coder returned wrong number of results?")
     jobs.foldLeft((Map.empty[RowHandle, Map[UserColumnId, SoQLValue]], featureIds)) { (accRemaining, handlePCDs) =>
       val (acc, remaining) = accRemaining
@@ -91,19 +110,71 @@ abstract class AbstractRegionCodingHandler extends ComputationHandler[SoQLType, 
     }._1
   }
 
-  def regionCode(endpoint: String, allCells: JArray): Seq[Option[Int]] = ???
+  def jsonify(cv: SoQLValue): JValue =
+    cv match {
+      case SoQLText(s) =>
+        JString(s)
+      case SoQLPoint(p) =>
+        val coord = p.getCoordinate
+        val numbers =
+          if(coord.z.isNaN) Seq(coord.x, coord.y)
+          else Seq(coord.x, coord.y, coord.z)
+        JsonEncode.toJValue(numbers)
+      case _ =>
+        JNull
+    }
 
-  def jsonify(cv: SoQLValue): JValue = cv match {
-    case SoQLText(s) =>
-      JString(s)
-    case SoQLPoint(p) =>
-      val coord = p.getCoordinate
-      JArray(Seq(coord.x, coord.y, coord.z).filterNot(_.isNaN).map(JNumber(_)))
-    case _ =>
-      JNull
+  def urlPrefix = baseURL() + "v2"
+
+  implicit def optionIntCodec =
+    new JsonDecode[Option[Int]] {
+      def decode(x: JValue): DecodeResult[Option[Int]] =
+        Right(JsonDecode[Int].decode(x).right.toOption)
+    }
+
+  def regionCode(endpoint: String, allCells: JArray): Seq[Option[Int]] = {
+    def loop(retriesLeft: Int): Seq[Option[Int]] = {
+      try {
+        val base =
+          RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
+            connectTimeoutMS(connectTimeout.toMillis.toInt).
+            receiveTimeoutMS(readTimeout.toMillis.toInt)
+        for(resp <- http.execute(base.json(JValueEventIterator(allCells)))) {
+          resp.resultCode match {
+            case 200 =>
+              try {
+                resp.value[Seq[Option[Int]]]() match {
+                  case Right(r) =>
+                    return r
+                  case Left(e) =>
+                    log.warn("Region-coding response was not well-typed: {}", e.english)
+                    // and retry
+                }
+              } catch {
+                case e: JsonReaderException =>
+                  log.warn("Malformed json received while region coding", e)
+                  // and retry
+              }
+            case other =>
+              log.warn("Non-200 result code from region coding: {}", other)
+              // and retry
+          }
+        }
+      } catch {
+        case e: IOException =>
+          log.warn("IO Exception while region coding", e)
+          // and retry
+        case e: HttpClientException =>
+          log.warn("HTTP client exception while region coding", e)
+          // and retry
+      }
+      if(retriesLeft == 0) throw ComputationFailure("Ran out of retries while region coding")
+      else loop(retriesLeft - 1)
+    }
+    loop(retries)
   }
 
-  def mergeWith[A, B](xs: Map[A, B], ys: Map[A, B])(f: (B, B) => B): Map[A, B] = {
+  def mergeWith[A, B](xs: Map[A, B], ys: Map[A, B])(f: (B, B) => B): Map[A, B] =
     ys.foldLeft(xs) { (combined, yab) =>
       val (a,yb) = yab
       val newB = combined.get(a) match {
@@ -112,10 +183,13 @@ abstract class AbstractRegionCodingHandler extends ComputationHandler[SoQLType, 
       }
       combined.updated(a, newB)
     }
-  }
 }
 
-class RegionCodingPointHandler extends AbstractRegionCodingHandler {
+class RegionCodingPointHandler(http: HttpClient,
+                               baseURL: () => String,
+                               connectTimeout: FiniteDuration,
+                               readTimeout: FiniteDuration,
+                               retries: Int) extends AbstractRegionCodingHandler(http, baseURL, connectTimeout, readTimeout, retries) {
   override type PerColumnData = RegionCodePointColumnInfo
 
   override def matchesStrategyType(typ: StrategyType): Boolean =
@@ -126,7 +200,11 @@ class RegionCodingPointHandler extends AbstractRegionCodingHandler {
   }
 }
 
-class RegionCodingStringHandler extends AbstractRegionCodingHandler {
+class RegionCodingStringHandler(http: HttpClient,
+                                baseURL: () => String,
+                                connectTimeout: FiniteDuration,
+                                readTimeout: FiniteDuration,
+                                retries: Int) extends AbstractRegionCodingHandler(http, baseURL, connectTimeout, readTimeout, retries) {
   override type PerColumnData = RegionCodeStringColumnInfo
 
   override def matchesStrategyType(typ: StrategyType): Boolean =
