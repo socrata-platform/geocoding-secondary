@@ -6,11 +6,16 @@ import com.socrata.datacoordinator.secondary.ComputationStrategyInfo
 import com.socrata.datacoordinator.secondary.feedback.{CopyNumber, DataVersion, CookieSchema}
 import com.socrata.datacoordinator.util.collection.ColumnIdMap
 import com.socrata.geocoders.{InternationalAddress, LatLon}
-import com.socrata.soql.types.{SoQLNumber, SoQLID, SoQLNull, SoQLText}
+import com.socrata.soql.types._
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 
 object TestData {
 
   val geocodingStrategyType = StrategyType("geocoding")
+
+  private val geometryFactory = new ThreadLocal[GeometryFactory] {
+    override def initialValue = new GeometryFactory()
+  }
 
   def strategyInfo(sourceColumnIds: Seq[UserColumnId], parameters: JObject) =
     ComputationStrategyInfo(geocodingStrategyType, sourceColumnIds, parameters)
@@ -37,7 +42,7 @@ object TestData {
   val targetColId = point.userId
 
   val columns = Seq(id, address, locality, subregion, region, postalCode, country, point)
-  val columnIdMap = columns.map(col => (col.userId, col.id.underlying)).toMap
+  val columnIdMap = columns.map(col => (col.userId, col.id)).toMap
 
   // source column ids
   val emptySourceColumnIds = Seq.empty
@@ -137,8 +142,7 @@ object TestData {
     obfuscationKey = "obfuscate".getBytes,
     computationRetriesLeft = 6,
     mutationScriptRetriesLeft = 6,
-    resync = false,
-    JNull
+    resync = false
   )
 
   def textOrNull(opt: Option[String]) = opt.map(SoQLText(_)).getOrElse(SoQLNull)
@@ -178,7 +182,7 @@ object TestData {
 
   val socrataAddress = InternationalAddress(Some("705 5th Ave S #600"), Some("Seattle"), None, Some("WA"), Some("98104"), Some("US"))
   val socrataRow = row(socrataAddress)
-  val socrataJValue = JString("POINT(47.5964756 -122.3303628)")
+  val socrataPoint = SoQLPoint(geometryFactory.get().createPoint(new Coordinate(-122.3303628, 47.5964756)))
 
   val socrataAddressNoRegion = socrataAddress.map(_.copy(region = None))
   val socrataRowNoRegion = row(socrataAddressNoRegion)
@@ -194,11 +198,11 @@ object TestData {
 
   val socrataDCAddress = InternationalAddress(Some("1150 17th St NW #200"), Some("Washington"), None, Some("DC"), Some("20036"), Some("US"))
   val socrataDCRow = row(socrataDCAddress)
-  val socrataDCJValue = JString("POINT(38.9053532 -77.0410809)")
+  val socrataDCPoint = SoQLPoint(geometryFactory.get().createPoint(new Coordinate(-77.0410809, 38.9053532)))
 
   val nowhereAddress = InternationalAddress(Some("101 Nowhere Lane"), None, None, Some("Nowhere Land"), None, Some("USA"))
   val nowhereRow = row(nowhereAddress)
-  val nowhereJValue = JNull
+  val nowhereValue = SoQLNull
 
   val badAddress = InternationalAddress(Some("Bad Address Lane"), None, None, None, None, None)
   val badAddressRow = row(badAddress)
