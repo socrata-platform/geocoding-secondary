@@ -7,11 +7,11 @@ val astyanaxThrift = astyanaxExcludes("com.netflix.astyanax" % "astyanax-thrift"
 
 val rojomaJsonV3            = "com.rojoma"  %% "rojoma-json-v3"             % "3.5.0"
 
-val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0.0.2"
+val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0.0.4"
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.0"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.5"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.9"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
