@@ -11,7 +11,7 @@ val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.0"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.10"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.11"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
