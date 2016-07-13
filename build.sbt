@@ -11,7 +11,7 @@ val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.0"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.9"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.0.11-SNAPSHOT"
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
@@ -30,6 +30,7 @@ lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "secondary-watcher-geocoding",
+    assemblyJarName in assembly := "secondary-watcher-geocoding-assembly.jar",
     libraryDependencies ++= Seq(
       astyanaxCassandra,
       astyanaxThrift,
