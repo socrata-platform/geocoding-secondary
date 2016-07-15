@@ -30,7 +30,6 @@ lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
     name := "secondary-watcher-geocoding",
-    assemblyJarName in assembly := "secondary-watcher-geocoding-assembly.jar",
     libraryDependencies ++= Seq(
       astyanaxCassandra,
       astyanaxThrift,
