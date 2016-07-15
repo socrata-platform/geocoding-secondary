@@ -19,7 +19,7 @@ val socrataThirdPartyUtils  = "com.socrata" %% "socrata-thirdparty-utils"   % "4
 
 val socrataSoqlTypes        = "com.socrata" %% "soql-types"                 % "1.0.1" excludeAll(ExclusionRule(organization = "com.rojoma"))
 
-val typesafeConfig          = "com.typesafe" % "config"                     % "1.0.2"
+val typesafeConfig          = "com.typesafe" % "config"                     % "1.3.0"
 
 lazy val commonSettings = Seq(
   organization := "com.socrata",
