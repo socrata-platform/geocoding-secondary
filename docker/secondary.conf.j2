@@ -2,7 +2,7 @@ instances {
   {{ SECONDARY_INSTANCE_NAME }} {
     secondaryType = geocoding
     numWorkers = {{ GEOCODING_SECONDARY_NUM_WORKERS }}
-    config = geocoding-secondary-config {
+    config = {
       base-batch-size = 40000
       mutation-script-retries = 5
       internal-mutation-script-retries = 5
