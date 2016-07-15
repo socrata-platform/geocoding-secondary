@@ -1,66 +1,61 @@
 instances {
-{% for name in GEOCODING_SECONDARY_INSTANCES.split() %}
-  {{ name }} {
+  {{ SECONDARY_INSTANCE_NAME }} {
     secondaryType = geocoding
     numWorkers = {{ GEOCODING_SECONDARY_NUM_WORKERS }}
-    config = ${geocoding-secondary-config}
-  }
-{% endfor %}
-}
+    config = geocoding-secondary-config {
+      base-batch-size = 40000
+      mutation-script-retries = 5
+      internal-mutation-script-retries = 5
+      computation-retries = 5
 
-geocoding-secondary-config {
-
-  base-batch-size = 40000
-    mutation-script-retries = 5
-    internal-mutation-script-retries = 5
-    computation-retries = 5
-
-    curator {
-      ensemble = {{ ZOOKEEPER_ENSEMBLE }}
-      namespace = "com.socrata/soda"
-      session-timeout = 40s
-      connect-timeout = 5s
-      base-retry-wait = 100ms
-      max-retry-wait = 10s
-      max-retries = 29
-    }
-
-    data-coordinator-service = "data-coordinator"
-
-    cassandra {
-      cluster = "My Cluster"
-      keyspace = "delta_importer_2"
-      connection-pool {
-        name = "Cassandra Pool"
-        port = 9160
-        max-connections-per-host = 1
-        seeds = {{ CASSANDRA_CP_SEEDS }}
-        connect-timeout = "500ms"
+      curator {
+        ensemble = {{ ZOOKEEPER_ENSEMBLE }}
+        namespace = "com.socrata/soda"
+        session-timeout = 40s
+        connect-timeout = 5s
+        base-retry-wait = 100ms
+        max-retry-wait = 10s
+        max-retries = 29
       }
-    }
 
-    geocoder {
-      filter-multipier = 1
-      cache {
-        column-family = geocode_cache
-        ttl = 60 days
-      }
-      mapquest {
-        {{ MAPQUEST_APP_TOKEN_LINE }}
-        retry-count = 5
-      }
-    }
+      data-coordinator-service = "data-coordinator"
 
-  # TODO figure out right strategy for where this should go
-  log4j {
-    rootLogger = [ INFO, console ]
-    appender {
-      console.class = org.apache.log4j.ConsoleAppender
-      console.props {
-	layout.class = org.apache.log4j.PatternLayout
-	layout.props {
-	  ConversionPattern = "%d %p [%t] (%X{X-Socrata-RequestId}) [%X{X-Socrata-Resource}] %c{1} %m%n"
-	}
+      cassandra {
+        cluster = "My Cluster"
+        keyspace = "delta_importer_2"
+        connection-pool {
+          name = "Cassandra Pool"
+          port = 9160
+          max-connections-per-host = 1
+          seeds = {{ CASSANDRA_CP_SEEDS }}
+          connect-timeout = "500ms"
+        }
+      }
+
+      geocoder {
+        filter-multipier = 1
+        cache {
+          column-family = geocode_cache
+          ttl = 60 days
+        }
+        mapquest {
+          {{ MAPQUEST_APP_TOKEN_LINE }}
+          retry-count = 5
+        }
+      }
+
+      # TODO figure out right strategy for where this should go
+      log4j {
+        rootLogger = [ INFO, console ]
+        appender {
+          console.class = org.apache.log4j.ConsoleAppender
+          console.props {
+            layout.class = org.apache.log4j.PatternLayout
+            layout.props {
+              ConversionPattern = "%d %p [%t] (%X{X-Socrata-RequestId}) [%X{X-Socrata-Resource}] %c{1} %m%n"
+            }
+          }
+        }
       }
     }
   }
