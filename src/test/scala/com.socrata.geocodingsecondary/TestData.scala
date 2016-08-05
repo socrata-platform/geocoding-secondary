@@ -141,7 +141,7 @@ object TestData {
     strategyMap = Map(targetColId -> strategyInfo),
     obfuscationKey = "obfuscate".getBytes,
     computationRetriesLeft = 6,
-    mutationScriptRetriesLeft = 6,
+    dataCoordinatorRetriesLeft = 6,
     resync = false
   )
 
