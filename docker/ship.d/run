@@ -17,6 +17,7 @@ exec su socrata -c '/usr/bin/java \
     -Dcom.sun.management.jmxremote.ssl=false \
     -Dcom.sun.management.jmxremote.authenticate=false \
     -Djava.rmi.server.hostname=${ARK_HOST:-localhost} \
+    -Dcom.socrata.data-coordinator.secondary-watcher.log4j.rootLogger.0=${LOG_LEVEL:-INFO} \
     -XX:MaxMetaspaceSize=${JAVA_MAX_METASPACE} \
     -jar $SERVER_ARTIFACT
     '
