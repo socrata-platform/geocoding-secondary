@@ -53,6 +53,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
       providerStrategy(new strategies.RoundRobinStrategy).
       serviceName(config.regioncoder.service).
       build())
+  regionDiscoveryProvider.start()
 
   def regionCoderURL() =
     Option(regionDiscoveryProvider.getInstance()) match {
