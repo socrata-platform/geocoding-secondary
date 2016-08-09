@@ -20,7 +20,9 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.FiniteDuration
 
-case class ResourceName(underlying: String)
+case class ResourceName(underlying: String) {
+  override final def toString = underlying
+}
 object ResourceName extends (String => ResourceName) {
   implicit val jCodec = WrapperJsonCodec[ResourceName](this, _.underlying)
 }
