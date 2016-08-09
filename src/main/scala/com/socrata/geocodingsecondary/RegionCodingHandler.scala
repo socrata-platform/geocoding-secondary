@@ -90,12 +90,22 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
   def computeOneEndpoint[RowHandle](endpoint: String, jobs: Map[RowHandle, Seq[PerCellData]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
     val allCells =
       for {
-        pcds <- jobs.values.toSeq
+        pcds <- jobs.values.toVector
         pcd <- pcds
       } yield jsonify(pcd.data(pcd.targetColId))
 
-    val featureIds = regionCode(endpoint, JArray(allCells))
-    assert(featureIds.length == allCells.length, "Region coder returned wrong number of results?")
+    // Ok, it'd be convenient if region-coder would take and return null values, but it doesn't,
+    // so we need to strip them out and then realign the results with the non-null inputs.
+    val noNulls = allCells.iterator.zipWithIndex.filter(_._1 != JNull).toVector
+    val featureIdsRaw = regionCode(endpoint, JArray(noNulls.map(_._1)))
+    assert(featureIdsRaw.length == noNulls.length, "Region coder returned wrong number of results?")
+    val featureIdsMap = noNulls.iterator.map(_._2).zip(featureIdsRaw.iterator).toMap
+    val featureIds = allCells.iterator.zipWithIndex.map {
+      case (JNull, idx) =>
+        None
+      case (_, idx) =>
+        featureIdsMap(idx)
+    }.toVector
     jobs.foldLeft((Map.empty[RowHandle, Map[UserColumnId, SoQLValue]], featureIds)) { (accRemaining, handlePCDs) =>
       val (acc, remaining) = accRemaining
       val (handle, pcds) = handlePCDs
