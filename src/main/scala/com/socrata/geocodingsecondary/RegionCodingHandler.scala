@@ -222,7 +222,7 @@ class RegionCodingStringHandler(http: HttpClient,
   override type PerColumnData = RegionCodeStringColumnInfo
 
   override def matchesStrategyType(typ: StrategyType): Boolean =
-    ST.GeoRegionMatchOnPoint.name == typ.underlying
+    ST.GeoRegionMatchOnString.name == typ.underlying
 
   override def setupColumn(cookie: CookieSchema, strategy: ComputationStrategyInfo, targetColId: UserColumnId): RegionCodeStringColumnInfo = {
     RegionCodeStringColumnInfo(strategy, cookie.columnIdMap(targetColId), targetColId)
