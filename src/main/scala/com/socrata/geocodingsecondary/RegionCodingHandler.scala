@@ -31,12 +31,15 @@ trait AbstractRegionCodeColumnInfo extends HasStrategy {
   implicit val columnNameCodec = WrapperJsonCodec[ColumnName](ColumnName, _.name)
   def defaultRegionPrimaryKey = ColumnName("_feature_id")
 
-  def targetColId: ColumnId
+  def cookie: CookieSchema
   def userTargetColId: UserColumnId
   def endpoint: String
+
+  final def sourceColId = cookie.columnIdMap(strategy.sourceColumnIds.head) // there will be exactly one
+  final def targetColId = cookie.columnIdMap(userTargetColId)
 }
 
-case class RegionCodePointColumnInfo(strategy: ComputationStrategyInfo, targetColId: ColumnId, userTargetColId: UserColumnId) extends AbstractRegionCodeColumnInfo {
+case class RegionCodePointColumnInfo(cookie: CookieSchema, strategy: ComputationStrategyInfo, userTargetColId: UserColumnId) extends AbstractRegionCodeColumnInfo {
   val parameters = JsonDecode[GeoRegionMatchOnPointParameterSchema[ResourceName, ColumnName]].decode(strategy.parameters) match {
     case Right(result) => result
     case Left(error) => throw new MalformedParametersException(error)
@@ -44,7 +47,7 @@ case class RegionCodePointColumnInfo(strategy: ComputationStrategyInfo, targetCo
   val endpoint = s"/regions/${parameters.region}/pointcode?columnToReturn=${parameters.primaryKey.getOrElse(defaultRegionPrimaryKey)}"
 }
 
-case class RegionCodeStringColumnInfo(strategy: ComputationStrategyInfo, targetColId: ColumnId, userTargetColId: UserColumnId) extends AbstractRegionCodeColumnInfo {
+case class RegionCodeStringColumnInfo(cookie: CookieSchema, strategy: ComputationStrategyInfo, userTargetColId: UserColumnId) extends AbstractRegionCodeColumnInfo {
   val parameters = JsonDecode[GeoRegionMatchOnStringParameterSchema[ResourceName, UserColumnId]].decode(strategy.parameters) match {
     case Right(result) => result
     case Left(error) => throw new MalformedParametersException(error)
@@ -52,7 +55,7 @@ case class RegionCodeStringColumnInfo(strategy: ComputationStrategyInfo, targetC
   val endpoint = s"/regions/${parameters.region}/stringcode?columnToMatch=${parameters.column}&columnToReturn=${parameters.primaryKey.getOrElse(defaultRegionPrimaryKey)}"
 }
 
-case class RegionCodeRowInfo(data: Row[SoQLValue], targetColId: ColumnId, userTargetColId: UserColumnId, endpoint: String)
+case class RegionCodeRowInfo(data: Row[SoQLValue], sourceColId: ColumnId, targetColId: ColumnId, userTargetColId: UserColumnId, endpoint: String)
 abstract class AbstractRegionCodingHandler(http: HttpClient,
                                            baseURL: () => String,
                                            connectTimeout: FiniteDuration,
@@ -72,7 +75,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
   override def setupDataset(cookie: CookieSchema) = cookie
 
   override def setupCell(colInfo: PerColumnData, row: Row[SoQLValue]): RegionCodeRowInfo = {
-    RegionCodeRowInfo(row, colInfo.targetColId, colInfo.userTargetColId, colInfo.endpoint)
+    RegionCodeRowInfo(row, colInfo.sourceColId, colInfo.targetColId, colInfo.userTargetColId, colInfo.endpoint)
   }
 
   override def compute[RowHandle](sources: Map[RowHandle, Seq[PerCellData]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
@@ -92,7 +95,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
       for {
         pcds <- jobs.values.toVector
         pcd <- pcds
-      } yield jsonify(pcd.data(pcd.targetColId))
+      } yield jsonify(pcd.data(pcd.sourceColId))
 
     // Ok, it'd be convenient if region-coder would take and return null values, but it doesn't,
     // so we need to strip them out and then realign the results with the non-null inputs.
@@ -210,7 +213,7 @@ class RegionCodingPointHandler(http: HttpClient,
     Set(ST.GeoRegion.name, ST.GeoRegionMatchOnPoint.name).contains(typ.underlying)
 
   override def setupColumn(cookie: CookieSchema, strategy: ComputationStrategyInfo, targetColId: UserColumnId): RegionCodePointColumnInfo = {
-    new RegionCodePointColumnInfo(strategy, cookie.columnIdMap(targetColId), targetColId)
+    new RegionCodePointColumnInfo(cookie, strategy, targetColId)
   }
 }
 
@@ -225,6 +228,6 @@ class RegionCodingStringHandler(http: HttpClient,
     ST.GeoRegionMatchOnString.name == typ.underlying
 
   override def setupColumn(cookie: CookieSchema, strategy: ComputationStrategyInfo, targetColId: UserColumnId): RegionCodeStringColumnInfo = {
-    RegionCodeStringColumnInfo(strategy, cookie.columnIdMap(targetColId), targetColId)
+    RegionCodeStringColumnInfo(cookie, strategy, targetColId)
   }
 }
