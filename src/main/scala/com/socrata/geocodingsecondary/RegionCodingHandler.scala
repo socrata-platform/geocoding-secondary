@@ -97,7 +97,9 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
     // Ok, it'd be convenient if region-coder would take and return null values, but it doesn't,
     // so we need to strip them out and then realign the results with the non-null inputs.
     val noNulls = allCells.iterator.zipWithIndex.filter(_._1 != JNull).toVector
-    val featureIdsRaw = regionCode(endpoint, JArray(noNulls.map(_._1)))
+    val featureIdsRaw =
+      if(noNulls.nonEmpty) regionCode(endpoint, JArray(noNulls.map(_._1))) // region-coder doesn't want empty sequences either
+      else Seq.empty
     assert(featureIdsRaw.length == noNulls.length, "Region coder returned wrong number of results?")
     val featureIdsMap = noNulls.iterator.map(_._2).zip(featureIdsRaw.iterator).toMap
     val featureIds = allCells.iterator.zipWithIndex.map {
