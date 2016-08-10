@@ -4,8 +4,8 @@ instances {
     numWorkers = {{ GEOCODING_SECONDARY_NUM_WORKERS }}
     config = {
       base-batch-size = 40000
-      mutation-script-retries = 5
-      internal-mutation-script-retries = 5
+      data-coordinator-retries = 5
+      internal-data-coordinator-retries = 5
       computation-retries = 5
 
       curator {
