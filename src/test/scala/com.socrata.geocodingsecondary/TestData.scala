@@ -175,12 +175,12 @@ object TestData {
   // rows and addresses
   val baseRow = ColumnIdMap(id.id -> SoQLID(5), point.id -> SoQLNull)
 
-  val emptyAddress = InternationalAddress(None, None, None, None, None, None) // actually None
+  val emptyAddress = InternationalAddress.create(None, None, None, None, None, None) // actually None
   val emptyRow = row(emptyAddress, nullCountry = true)
   val emptyJValue = JNull
   val usJValue = JString("POINT(36.2474412 -113.7152476)")
 
-  val socrataAddress = InternationalAddress(Some("705 5th Ave S #600"), Some("Seattle"), None, Some("WA"), Some("98104"), Some("US"))
+  val socrataAddress = InternationalAddress.create(Some("705 5th Ave S #600"), Some("Seattle"), None, Some("WA"), Some("98104"), Some("US"))
   val socrataRow = row(socrataAddress)
   val socrataPoint = SoQLPoint(geometryFactory.get().createPoint(new Coordinate(-122.3303628, 47.5964756)))
 
@@ -196,15 +196,15 @@ object TestData {
   val socrataAddressUnitedStates = socrataAddress.map(_.copy(country = "United States"))
   val socrataRowUnitedStates = row(socrataAddressUnitedStates)
 
-  val socrataDCAddress = InternationalAddress(Some("1150 17th St NW #200"), Some("Washington"), None, Some("DC"), Some("20036"), Some("US"))
+  val socrataDCAddress = InternationalAddress.create(Some("1150 17th St NW #200"), Some("Washington"), None, Some("DC"), Some("20036"), Some("US"))
   val socrataDCRow = row(socrataDCAddress)
   val socrataDCPoint = SoQLPoint(geometryFactory.get().createPoint(new Coordinate(-77.0410809, 38.9053532)))
 
-  val nowhereAddress = InternationalAddress(Some("101 Nowhere Lane"), None, None, Some("Nowhere Land"), None, Some("USA"))
+  val nowhereAddress = InternationalAddress.create(Some("101 Nowhere Lane"), None, None, Some("Nowhere Land"), None, Some("USA"))
   val nowhereRow = row(nowhereAddress)
   val nowhereValue = SoQLNull
 
-  val badAddress = InternationalAddress(Some("Bad Address Lane"), None, None, None, None, None)
+  val badAddress = InternationalAddress.create(Some("Bad Address Lane"), None, None, None, None, None)
   val badAddressRow = row(badAddress)
 
   val knownAddresses = Map(

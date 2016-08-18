@@ -68,7 +68,7 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
       if (Seq(address, locality, subregion, region, postalCode, country).forall(_.isEmpty)) {
         None
       } else {
-        InternationalAddress(
+        InternationalAddress.create(
           address.orElse(colInfo.parameters.defaults.address),
           locality.orElse(colInfo.parameters.defaults.locality),
           subregion.orElse(colInfo.parameters.defaults.subregion),
