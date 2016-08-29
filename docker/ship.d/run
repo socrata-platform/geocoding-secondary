@@ -19,5 +19,6 @@ exec su socrata -c '/usr/bin/java \
     -Djava.rmi.server.hostname=${ARK_HOST:-localhost} \
     -Dcom.socrata.data-coordinator.secondary-watcher.log4j.rootLogger.0=${LOG_LEVEL:-INFO} \
     -XX:MaxMetaspaceSize=${JAVA_MAX_METASPACE} \
+    -XX:+ExitOnOutOfMemoryError \
     -jar $SERVER_ARTIFACT
     '
