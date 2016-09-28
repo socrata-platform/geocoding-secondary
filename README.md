@@ -1,14 +1,25 @@
 ## geocoding-secondary
-Asynchronous NBE geocoding service
+Asynchronous NBE geocoding and region coding service
 
 ## Design
 **geocoding-secondary** is a _feedback_ secondary. [What is a feedback secondary?](https://docs.google.com/document/d/1feNpBc8mbEi5CF7sDmvASkMyISJhLofbPuFM4jaNL14/edit) Like other secondaries it runs as an instance of secondary-watcher. But instead of writing to its own store, it _feeds back_ its computations to `truth` by posting mutation scripts to data-coordinator.
 
 ## Usage
-**geocoding-secondary** operates on _computed point_ columns with computation strategy `"type" : "geocoding"`. It geocodes the value of the target point column from an address constructed from the text source columns described in the `computationStrategy`.
+**geocoding-secondary** operates on _computed columns_ with computation strategies of the following types:
+* `geocoding`
+* `georegion_match_on_point` or legacy `georegion`
+* `georegion_match_on_string`
 
-#### Computed Column Definition
-For a _geocoded_ computed column
+It computes the value of the target computed column from the source columns described in the `computationStrategy`.
+
+## Computed Column Definitions
+Each computation strategy type defines what should be found in `parameters`.
+
+We have a strategy definition validation library for [computation strategies](https://github.com/socrata-platform/computation-strategies).
+### Geocoding
+**geocoding-secondary** geocodes the value of the target _point_ column from an _address_ constructed from the _text_ source columns described in the `computationStrategy`.
+
+For a _geocoded_ computed column of type `"geocoding"`
 * the column `dataTypeName` must be `"point"`.
 * the column `computationStrategy.type` must be `"geocoding"`.
 * source columns must be `text` columns.\*
@@ -88,6 +99,12 @@ These can be set through the admin panel by providing the property to the `"geoc
   - `"country"`
 
 Setting a domain wide default for `"country"` is encouraged as otherwise `"computationStrategy.defaults.country"` will be defaulted to `"US"`.
+
+### Region Coding
+There are two types of region coded computed columns.
+
+#### Georegion Match On Point
+#### Georegion Match On String
 
 ## Running
 To run the tests
