@@ -101,7 +101,7 @@ These can be set through the admin panel by providing the property to the `"geoc
 Setting a domain wide default for `"country"` is encouraged as otherwise `"computationStrategy.defaults.country"` will be defaulted to `"US"`.
 
 ### Region Coding
-**geocoding-secondary** region codes the value of the target _number_ column from either a _lat/lon_ or _string_ value from the _point_ or _text_ source column described in the `computationStrategy` using the specified region dataset found in `parameters`.
+**geocoding-secondary** region codes the value of the target _number_ column from either a _lat/lon_ or _string_ value from the _point_ or _text_ source column described in the `computationStrategy` using the specified curated region dataset found in `parameters`.
 
 #### Georegion Match On Point
 For a _region coded_ computed column of type `"georegion_match_on_point"` (legacy `"georegion"`)
@@ -109,11 +109,43 @@ For a _region coded_ computed column of type `"georegion_match_on_point"` (legac
 * the column `computationStrategy.type` must be `"georegion_match_on_point"` (or legacy `"georegion"`).
 * a single source column must be of type `"point"`.
 
+The computation strategy has the following _required_ parameters:
+* `"region"` which is the resource name of the curated region
+* `"primary_key"` which is the primary key of the curated region
+
+For example:
+```
+{ "type": "georegion_match_on_point",
+  "source_columns": ["location_point"],
+  "parameters": {
+    "region": "_nmuc-gpu5",
+    "primary_key": "_feature_id"
+  }
+}
+```
+
 #### Georegion Match On String
 For a _region coded_ computed column of type `"georegion_match_on_string"`
 * the column `dataTypeName` must be `"number"`.
 * the column `computationStrategy.type` must be `"georegion_match_on_string"`.
 * a single source column must be of type `"text"`.
+
+The computation strategy has the following _required_ parameters:
+* `"region"` which is the resource name of the curated region
+* `"column"` TODO: what is this?
+* `"primary_key"` which is the primary key of the curated region
+
+For example:
+```
+{ "type": "georegion_match_on_string",
+  "source_columns": ["location_string"],
+  "parameters": {
+    "region": "_nmuc-gpu5",
+    "column": "column_1",
+    "primary_key": "_feature_id"
+  }
+}
+```
 
 ## Running
 To run the tests
