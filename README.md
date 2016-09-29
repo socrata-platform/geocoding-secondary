@@ -104,7 +104,16 @@ Setting a domain wide default for `"country"` is encouraged as otherwise `"compu
 **geocoding-secondary** region codes the value of the target _number_ column from either a _lat/lon_ or _string_ value from the _point_ or _text_ source column described in the `computationStrategy` using the specified region dataset found in `parameters`.
 
 #### Georegion Match On Point
+For a _region coded_ computed column of type `"georegion_match_on_point"` (legacy `"georegion"`)
+* the column `dataTypeName` must be `"number"`.
+* the column `computationStrategy.type` must be `"georegion_match_on_point"` (or legacy `"georegion"`).
+* a single source column must be of type `"point"`.
+
 #### Georegion Match On String
+For a _region coded_ computed column of type `"georegion_match_on_string"`
+* the column `dataTypeName` must be `"number"`.
+* the column `computationStrategy.type` must be `"georegion_match_on_string"`.
+* a single source column must be of type `"text"`.
 
 ## Running
 To run the tests
