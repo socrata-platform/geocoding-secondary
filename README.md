@@ -6,9 +6,9 @@ Asynchronous NBE geocoding and region coding service
 
 ## Usage
 **geocoding-secondary** operates on _computed columns_ with computation strategies of the following types:
-* `geocoding`
-* `georegion_match_on_point` or legacy `georegion`
-* `georegion_match_on_string`
+* [`geocoding`](README.md#geocoding)
+* [`georegion_match_on_point`](README.md#georegion-match-on-point) or legacy `georegion`
+* [`georegion_match_on_string`](README.md#georegion-match-on-string)
 
 It computes the value of the target computed column from the source columns described in the `computationStrategy`.
 
@@ -101,7 +101,7 @@ These can be set through the admin panel by providing the property to the `"geoc
 Setting a domain wide default for `"country"` is encouraged as otherwise `"computationStrategy.defaults.country"` will be defaulted to `"US"`.
 
 ### Region Coding
-There are two types of region coded computed columns.
+**geocoding-secondary** region codes the value of the target _number_ column from either a _lat/lon_ or _string_ value from the _point_ or _text_ source column described in the `computationStrategy` using the specified region dataset found in `parameters`.
 
 #### Georegion Match On Point
 #### Georegion Match On String
