@@ -148,6 +148,17 @@ For example:
 ```
 
 ## Running
+### Configuration
+#### MapQuest
+For `geocoding-secondary` to use MapQuest add to your config under `com.socrata.geocoding-secondary.geocoder`
+```
+mapquest {
+  app-token = "SOME MAPQUEST APP TOKEN"
+  retry-count = 5
+}
+```
+
+### Tests
 To run the tests
 ```
 sbt test
