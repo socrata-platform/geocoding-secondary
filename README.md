@@ -149,6 +149,10 @@ For example:
 
 ## Running
 ### Configuration
+If you want to use the geocoding secondary you will need to add a MapQuest app-token to the config and add it to the `secondary_stores_config` table in `datacoordinator` (truth).
+```
+INSERT INTO secondary_stores_config (store_id, next_run_time, interval_in_seconds, is_feedback_secondary) VALUES( 'geocoding', now(), 5, true);
+```
 #### MapQuest
 For `geocoding-secondary` to use MapQuest add to your config under `com.socrata.geocoding-secondary.geocoder`
 ```
@@ -158,7 +162,13 @@ mapquest {
 }
 ```
 
-### Tests
+### Running
+```
+> sbt assembly
+> java -Djava.net.preferIPv4Stack=true -Dconfig.file=/etc/geocoding-secondary.conf -jar target/scala-2.10/secondary-watcher-geocoding-assembly-0.0.12-SNAPSHOT.jar
+```
+
+## Tests
 To run the tests
 ```
 sbt test
