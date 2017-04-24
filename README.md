@@ -55,7 +55,27 @@ Version:
 
 If the api version is not provided the version will default to the current version and be inserted into the computation strategy.
 
-For example:
+An example of creating a new geocoded column with a POST to `/views/<lensId>/columns.json` (note that not all `parameters.sources` options are present--or required--and that no `"fieldName"` is supplied since it will be assigned by the backend):
+```
+{
+  "name": "Location",
+  "dataTypeName": "point",
+  "computationStrategy": {
+    "type": "geocoding",
+    "source_columns": ["street_address", "zip_code"],
+    "parameters": {
+      "sources": {
+        "address": "street_address",
+        "postal_code": "zip_code"
+      },
+      "defaults": {},
+      "version": "v1"
+    }
+  }
+}
+```
+
+An example of a geocoded column from a GET request to `/api/views/<lensId>.json` (note the presence of the `"fieldName"` property):
 ```
 {
   "name": "Location",
