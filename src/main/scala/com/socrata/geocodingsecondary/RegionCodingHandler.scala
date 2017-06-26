@@ -95,7 +95,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
       for {
         pcds <- jobs.values.toVector
         pcd <- pcds
-      } yield jsonify(pcd.data(pcd.sourceColId))
+      } yield jsonify(pcd.data.getOrElse(pcd.sourceColId, null))
 
     // Ok, it'd be convenient if region-coder would take and return null values, but it doesn't,
     // so we need to strip them out and then realign the results with the non-null inputs.
