@@ -1,6 +1,6 @@
 package com.socrata.geocodingsecondary
 
-import com.socrata.datacoordinator.secondary.feedback.ComputationFailure
+import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure}
 import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
 import com.socrata.soql.types.SoQLNull
 import org.scalatest.{ShouldMatchers, FunSuite}
@@ -11,11 +11,13 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   val user = "geocoding-secondary"
 
+  val badAddressException = new Exception("Bad address!")
+
   val geocoder = new OptionalGeocoder {override def batchSize: Int = 100 // doesn't matter
 
     override def geocode(addresses: Seq[Option[InternationalAddress]]): Seq[Option[LatLon]] =
       addresses.map{ address =>
-        if (address == badAddress) throw new Exception("Bad address!") else knownAddresses.get(address)
+        if (address == badAddress) throw badAddressException else knownAddresses.get(address)
       }
   }
 
@@ -150,7 +152,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
   // tests for GeocodingHandler.compute(.)
 
   test("Should handle compute(.) called with an empty map") {
-    handler.compute[Int](Map.empty) should be (Map.empty)
+    handler.compute[Int](Map.empty) should be (Right(Map.empty))
   }
 
   test("Should compute results for both valid and invalid addresses") {
@@ -160,18 +162,17 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
       3 -> Seq(GeocodeRowInfo(socrataDCAddress, socrataDCRow, targetColId)),
       5 -> Seq(GeocodeRowInfo(nowhereAddress, nowhereRow, targetColId))
     )
-    val expected = Map(
+    val expected = Right(Map(
       0 -> Map(targetColId -> SoQLNull),
       2 -> Map(targetColId -> socrataPoint),
       3 -> Map(targetColId -> socrataDCPoint),
       5 -> Map(targetColId -> nowhereValue)
-    )
+    ))
     handler.compute(rows) should equal (expected)
   }
 
-  test("Should throw a ComputationFailure if geocoder throws during compute(.)") {
-    intercept[ComputationFailure] {
-      handler.compute(Map(0 -> Seq(GeocodeRowInfo(badAddress, badAddressRow, targetColId))))
-    }
+  test("Should return a ComputationFailure if geocoder throws during compute(.)") {
+    val expected = Left(ComputationError(badAddressException.getMessage, Some(badAddressException)))
+    handler.compute(Map(0 -> Seq(GeocodeRowInfo(badAddress, badAddressRow, targetColId)))) should be (expected)
   }
 }
