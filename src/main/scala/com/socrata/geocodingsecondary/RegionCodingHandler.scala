@@ -87,8 +87,6 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
           case (rh, rcis) => rcis.iterator.map((rh, _))
         }.toSeq.groupBy(_._2.endpoint).mapValuesStrictly(_.groupBy(_._1).mapValuesStrictly(_.map(_._2)))
 
-      val workerName = Thread.currentThread().getName
-
       // maintain the same MDC context map for our logging
       val orignalContextMap = MDC.getCopyOfContextMap
 
@@ -96,7 +94,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
         // set thread name
         val thread = Thread.currentThread()
         val name = thread.getName
-        Thread.currentThread().setName(s"$workerName $name")
+        Thread.currentThread().setName(s"Worker ${thread.getId} for parallel region-coding")
 
         // set context map to include request id sent to region-coder
         val contextMap = MDC.getCopyOfContextMap
