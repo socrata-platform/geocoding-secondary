@@ -15,7 +15,7 @@ val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3
 
 val javaxServlet            = "javax.servlet" % "javax.servlet-api"         % "3.1.0" // needed for socrata-http-server
 
-val socrataHttpServer       = "com.socrata" %% "socrata-http-server"        % "3.11.1"
+val socrataHttpServer       = "com.socrata" %% "socrata-http-server"        % "3.11.1" // we are just using RequestId from this
 
 val socrataCuratorUtils     = "com.socrata" %% "socrata-curator-utils"      % "1.0.3"
 
