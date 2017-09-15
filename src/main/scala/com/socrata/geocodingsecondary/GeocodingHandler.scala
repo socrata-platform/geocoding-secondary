@@ -6,7 +6,7 @@ import com.socrata.computation_strategies.{StrategyType => ST, GeocodingParamete
 import com.socrata.datacoordinator.id.{StrategyType, ColumnId, UserColumnId}
 import com.socrata.datacoordinator.secondary
 import com.socrata.datacoordinator.secondary._
-import com.socrata.datacoordinator.secondary.feedback.{HasStrategy, ComputationFailure, CookieSchema, ComputationHandler}
+import com.socrata.datacoordinator.secondary.feedback.{HasStrategy, ComputationError, ComputationFailure, CookieSchema, ComputationHandler}
 import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
 import com.socrata.soql.types._
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
@@ -80,13 +80,13 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
     GeocodeRowInfo(internationalAddress, row, colInfo.targetColId)
   }
 
-  override def compute[RowHandle](sources: Map[RowHandle, Seq[GeocodeRowInfo]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
+  override def compute[RowHandle](sources: Map[RowHandle, Seq[GeocodeRowInfo]]): Either[ComputationFailure, Map[RowHandle, Map[UserColumnId, SoQLValue]]] = {
     val addresses = sources.valuesIterator.flatMap(_.map(_.address)).toSeq
     val points = try {
       geocoder.geocode(addresses)
     } catch {
-      case e : Throwable =>
-        throw ComputationFailure(e.getMessage)
+      case e : Exception =>
+        return Left(ComputationError(e.getMessage, Some(e)))
     }
 
     // ok, the reassembly will be a little interesting...
@@ -105,7 +105,7 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
         (newAcc, leftoverPoints)
       }
     assert(leftovers.isEmpty, "Geocoding returned too many results?")
-    result
+    Right(result)
   }
 
   private val geometryFactory =

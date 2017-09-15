@@ -7,16 +7,17 @@ import com.rojoma.json.v3.codec.JsonDecode.DecodeResult
 import com.rojoma.json.v3.codec.{JsonEncode, JsonDecode}
 import com.rojoma.json.v3.io.{JsonReaderException, JValueEventIterator}
 import com.rojoma.json.v3.util.WrapperJsonCodec
-import com.socrata.curator.CuratorServiceBase
 import com.socrata.datacoordinator.id.{ColumnId, StrategyType, UserColumnId}
 import com.socrata.computation_strategies.{StrategyType => ST, GeoRegionMatchOnStringParameterSchema, GeoRegionMatchOnPointParameterSchema}
 import com.socrata.datacoordinator.secondary.{ComputationStrategyInfo, Row}
-import com.socrata.datacoordinator.secondary.feedback.{ComputationFailure, HasStrategy, CookieSchema, ComputationHandler}
+import com.socrata.datacoordinator.secondary.feedback._
 import com.socrata.http.client.exceptions.HttpClientException
 import com.socrata.http.client.{RequestBuilder, HttpClient}
+import com.socrata.http.server.util.RequestId
+
 import com.socrata.soql.environment.ColumnName
 import com.socrata.soql.types._
-import org.slf4j.LoggerFactory
+import org.slf4j.{MDC, LoggerFactory}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -78,16 +79,40 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
     RegionCodeRowInfo(row, colInfo.sourceColId, colInfo.targetColId, colInfo.userTargetColId, colInfo.endpoint)
   }
 
-  override def compute[RowHandle](sources: Map[RowHandle, Seq[PerCellData]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
-    // ok, we'll need to partition `sources` into sub-maps grouped by the RCIs' endpoints.
-    val splitSources: Map[String, Map[RowHandle, Seq[PerCellData]]] =
-      sources.iterator.flatMap {
-        case (rh, rcis) => rcis.iterator.map((rh, _))
-      }.toSeq.groupBy(_._2.endpoint).mapValuesStrictly(_.groupBy(_._1).mapValuesStrictly(_.map(_._2)))
+  override def compute[RowHandle](sources: Map[RowHandle, Seq[PerCellData]]): Either[ComputationFailure, Map[RowHandle, Map[UserColumnId, SoQLValue]]] = {
+    try {
+      // ok, we'll need to partition `sources` into sub-maps grouped by the RCIs' endpoints.
+      val splitSources: Map[String, Map[RowHandle, Seq[PerCellData]]] =
+        sources.iterator.flatMap {
+          case (rh, rcis) => rcis.iterator.map((rh, _))
+        }.toSeq.groupBy(_._2.endpoint).mapValuesStrictly(_.groupBy(_._1).mapValuesStrictly(_.map(_._2)))
 
-    splitSources.toSeq.par.map { case (endpoint, jobsForEndpoint) =>
-      computeOneEndpoint(endpoint, jobsForEndpoint)
-    }.fold(Map.empty[RowHandle, Map[UserColumnId, SoQLValue]])(mergeWith(_, _)(_ ++ _))
+      // maintain the same MDC context map for our logging
+      val orignalContextMap = MDC.getCopyOfContextMap
+
+      Right(splitSources.toSeq.par.map { case (endpoint, jobsForEndpoint) =>
+        // set thread name
+        val thread = Thread.currentThread()
+        val name = thread.getName
+        Thread.currentThread().setName(s"Worker ${thread.getId} for parallel region-coding")
+
+        // set context map to include request id sent to region-coder
+        val contextMap = MDC.getCopyOfContextMap
+        contextMap.put(RequestId.ReqIdHeader, RequestId.generate())
+        MDC.setContextMap(contextMap)
+
+        val computed = computeOneEndpoint(endpoint, jobsForEndpoint)
+
+        // reset thread name and context map
+        thread.setName(name)
+        MDC.setContextMap(orignalContextMap)
+
+        computed
+      }.fold(Map.empty[RowHandle, Map[UserColumnId, SoQLValue]])(mergeWith(_, _)(_ ++ _)))
+    } catch {
+      case ComputationErrorException(reason, cause) => Left(ComputationError(reason, cause))
+      case FatalComputationErrorException(reason, cause) => Left(FatalComputationError(reason, cause))
+    }
   }
 
   def computeOneEndpoint[RowHandle](endpoint: String, jobs: Map[RowHandle, Seq[PerCellData]]): Map[RowHandle, Map[UserColumnId, SoQLValue]] = {
@@ -155,7 +180,8 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
         val base =
           RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
             connectTimeoutMS(connectTimeout.toMillis.toInt).
-            receiveTimeoutMS(readTimeout.toMillis.toInt)
+            receiveTimeoutMS(readTimeout.toMillis.toInt).
+            addHeader((RequestId.ReqIdHeader, MDC.get(RequestId.ReqIdHeader)))
         for(resp <- http.execute(base.json(JValueEventIterator(allCells)))) {
           resp.resultCode match {
             case 200 =>
@@ -172,6 +198,11 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
                   log.warn("Malformed json received while region coding", e)
                   // and retry
               }
+            case 404 =>
+              log.warn("Received a 404 result code for region coding: {}", endpoint)
+              // do not retry upon 404
+              // this will immediately mark the dataset as broken, which is fine since retrying this won't help
+              throw FatalComputationErrorException(s"Failed to region code $endpoint; received a 404 result code")
             case other =>
               log.warn("Non-200 result code from region coding: {}", other)
               // and retry
@@ -185,7 +216,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
           log.warn("HTTP client exception while region coding", e)
           // and retry
       }
-      if(retriesLeft == 0) throw ComputationFailure("Ran out of retries while region coding")
+      if(retriesLeft == 0) throw ComputationErrorException("Ran out of retries while region coding")
       else loop(retriesLeft - 1)
     }
     loop(retries)

@@ -2,7 +2,7 @@ package com.socrata.geocodingsecondary
 
 import com.netflix.astyanax.AstyanaxContext
 import com.rojoma.simplearm.v2.Resource
-import com.socrata.datacoordinator.secondary.feedback.{ComputationFailure, ComputationHandler}
+import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
 import com.socrata.geocoders._
 import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient}
@@ -58,7 +58,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   def regionCoderURL() =
     Option(regionDiscoveryProvider.getInstance()) match {
       case Some(spec) => spec.buildUriSpec()
-      case None => throw ComputationFailure("Cannot find instance of " + config.regioncoder.service + " with which to region-code")
+      case None => throw new Exception("Cannot find instance of " + config.regioncoder.service + " with which to region-code") // TODO: really?
     }
 
   override val computationHandlers: Seq[ComputationHandler[SoQLType, SoQLValue]] =
