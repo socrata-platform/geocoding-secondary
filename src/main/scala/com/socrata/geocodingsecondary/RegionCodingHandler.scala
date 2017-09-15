@@ -19,7 +19,6 @@ import com.socrata.soql.environment.ColumnName
 import com.socrata.soql.types._
 import org.slf4j.{MDC, LoggerFactory}
 
-import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.duration.FiniteDuration
 
 case class ResourceName(underlying: String) {
@@ -64,8 +63,6 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
                                            readTimeout: FiniteDuration,
                                            retries: Int) extends ComputationHandler[SoQLType, SoQLValue] {
   val log = LoggerFactory.getLogger(classOf[AbstractRegionCodingHandler])
-
-  val taskSupport = MDCTaskSupport(new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(2))) _
 
   override type PerDatasetData = CookieSchema
   override type PerColumnData <: AbstractRegionCodeColumnInfo
