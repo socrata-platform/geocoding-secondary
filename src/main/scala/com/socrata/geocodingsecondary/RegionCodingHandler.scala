@@ -88,24 +88,24 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
         }.toSeq.groupBy(_._2.endpoint).mapValuesStrictly(_.groupBy(_._1).mapValuesStrictly(_.map(_._2)))
 
       // maintain the same MDC context map for our logging
-      val orignalContextMap = MDC.getCopyOfContextMap
+      val parentContextMap = MDC.getCopyOfContextMap
 
       Right(splitSources.toSeq.par.map { case (endpoint, jobsForEndpoint) =>
         // set thread name
         val thread = Thread.currentThread()
         val name = thread.getName
-        Thread.currentThread().setName(s"Worker ${thread.getId} for parallel region-coding")
+        thread.setName(s"ThreadId:${thread.getId} parallel region-coding")
 
-        // set context map to include request id sent to region-coder
-        val contextMap = MDC.getCopyOfContextMap
-        contextMap.put(RequestId.ReqIdHeader, RequestId.generate())
-        MDC.setContextMap(contextMap)
+        // we are in a worker thread here because of the parallel call
+        MDC.setContextMap(parentContextMap)
 
-        val computed = computeOneEndpoint(endpoint, jobsForEndpoint)
-
-        // reset thread name and context map
-        thread.setName(name)
-        MDC.setContextMap(orignalContextMap)
+        val computed = try {
+          computeOneEndpoint(endpoint, jobsForEndpoint)
+        } finally {
+          // reset thread name and clear MDC
+          thread.setName(name)
+          MDC.clear()
+        }
 
         computed
       }.fold(Map.empty[RowHandle, Map[UserColumnId, SoQLValue]])(mergeWith(_, _)(_ ++ _)))
@@ -181,7 +181,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
           RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
             connectTimeoutMS(connectTimeout.toMillis.toInt).
             receiveTimeoutMS(readTimeout.toMillis.toInt).
-            addHeader((RequestId.ReqIdHeader, MDC.get(RequestId.ReqIdHeader)))
+            addHeader((RequestId.ReqIdHeader, MDC.get("job-id")))
         for(resp <- http.execute(base.json(JValueEventIterator(allCells)))) {
           resp.resultCode match {
             case 200 =>

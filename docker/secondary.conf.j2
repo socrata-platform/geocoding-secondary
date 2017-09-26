@@ -43,20 +43,6 @@ instances {
           retry-count = 5
         }
       }
-
-      # TODO figure out right strategy for where this should go
-      log4j {
-        rootLogger = [ INFO, console ]
-        appender {
-          console.class = org.apache.log4j.ConsoleAppender
-          console.props {
-            layout.class = org.apache.log4j.PatternLayout
-            layout.props {
-              ConversionPattern = "%d %p [%t] (%X{job-id}) (%X{X-Socrata-RequestId}) [%X{dataset-id}] %c{1} %m%n"
-            }
-          }
-        }
-      }
     }
   }
 }
