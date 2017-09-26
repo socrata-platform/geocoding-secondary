@@ -88,16 +88,16 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
         }.toSeq.groupBy(_._2.endpoint).mapValuesStrictly(_.groupBy(_._1).mapValuesStrictly(_.map(_._2)))
 
       // maintain the same MDC context map for our logging
-      val parentContextMap = MDC.getCopyOfContextMap
+      val parentContextMap = Option(MDC.getCopyOfContextMap) // can be null
 
       Right(splitSources.toSeq.par.map { case (endpoint, jobsForEndpoint) =>
         // set thread name
         val thread = Thread.currentThread()
         val name = thread.getName
-        thread.setName(s"ThreadId:${thread.getId} parallel region-coding")
+        thread.setName(s"ThreadId:${thread.getId} parallel region-coding for ${parentContextMap.map(_.get("dataset-id")).getOrElse("UNKNOWN")}")
 
         // we are in a worker thread here because of the parallel call
-        MDC.setContextMap(parentContextMap)
+        parentContextMap.foreach(MDC.setContextMap)
 
         val computed = try {
           computeOneEndpoint(endpoint, jobsForEndpoint)
