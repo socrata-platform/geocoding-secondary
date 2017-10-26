@@ -136,7 +136,7 @@ object TestData {
   def cookieSchema(strategyInfo: ComputationStrategyInfo) = CookieSchema(
     dataVersion = DataVersion(44),
     copyNumber = CopyNumber(4),
-    primaryKey = id.userId,
+    systemId = id.userId,
     columnIdMap,
     strategyMap = Map(targetColId -> strategyInfo),
     obfuscationKey = "obfuscate".getBytes,
