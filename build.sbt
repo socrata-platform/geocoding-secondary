@@ -11,7 +11,7 @@ val computationStrategies   = "com.socrata" %% "computation-strategies"     % "0
 
 val geocoders               = "com.socrata" %% "geocoders"                  % "2.0.7"
 
-val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.3.30"
+val dataCoordinator         = "com.socrata" %% "secondarylib-feedback"      % "3.3.32"
 
 val javaxServlet            = "javax.servlet" % "javax.servlet-api"         % "3.1.0" // needed for socrata-http-server
 
