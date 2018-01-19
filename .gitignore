@@ -5,4 +5,5 @@ target/
 /test-out/
 .idea*/
 sbt-test.log
+configs/local-geocoding-secondary.conf
 
