@@ -174,18 +174,25 @@ If you want to use the geocoding secondary you will need to add a MapQuest app-t
 INSERT INTO secondary_stores_config (store_id, next_run_time, interval_in_seconds, is_feedback_secondary) VALUES( 'geocoding', now(), 5, true);
 ```
 #### MapQuest
-For `geocoding-secondary` to use MapQuest add to your config under `com.socrata.geocoding-secondary.geocoder`
+For `geocoding-secondary` to use MapQuest create the .gitignored local override file `configs/local-geocoding-secondary.conf`
+and override the value for `com.socrata.geocoding-secondary.geocoder.mapquest.app-token` with a real MapQuest app token.
 ```
-mapquest {
-  app-token = "SOME MAPQUEST APP TOKEN"
-  retry-count = 5
+> cat configs/local-geocoding-secondary.conf
+com.socrata.geocoding-secondary {
+  geocoder.mapquest.app-token = "SOME REAL MAPQUEST APP TOKEN"
 }
 ```
 
 ### Running
+With `sbt`:
+```
+> sbt -Dconfig.file=configs/application.conf run
+```
+
+Running the assembled jarfile:
 ```
 > sbt assembly
-> java -Djava.net.preferIPv4Stack=true -Dconfig.file=/etc/geocoding-secondary.conf -jar target/scala-2.10/secondary-watcher-geocoding-assembly-0.0.12-SNAPSHOT.jar
+> java -Djava.net.preferIPv4Stack=true -Dconfig.file=configs/application.conf -jar target/scala-2.10/secondary-watcher-geocoding-assembly-<version>-SNAPSHOT.jar
 ```
 
 ## Tests
