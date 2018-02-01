@@ -174,10 +174,10 @@ If you want to use the geocoding secondary you will need to add a MapQuest app-t
 INSERT INTO secondary_stores_config (store_id, next_run_time, interval_in_seconds, is_feedback_secondary) VALUES( 'geocoding', now(), 5, true);
 ```
 #### MapQuest
-For `geocoding-secondary` to use MapQuest create the .gitignored local override file `configs/local-geocoding-secondary.conf`
+For `geocoding-secondary` to use MapQuest create the .gitignored local override file `configs/local.conf`
 and override the value for `com.socrata.geocoding-secondary.geocoder.mapquest.app-token` with a real MapQuest app token.
 ```
-> cat configs/local-geocoding-secondary.conf
+> cat configs/local.conf
 com.socrata.geocoding-secondary {
   geocoder.mapquest.app-token = "SOME REAL MAPQUEST APP TOKEN"
 }
