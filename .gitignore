@@ -6,4 +6,4 @@ target/
 .idea*/
 sbt-test.log
 configs/local*.conf
-
+/*.log
