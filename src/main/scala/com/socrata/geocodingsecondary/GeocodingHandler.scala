@@ -1,13 +1,14 @@
 package com.socrata.geocodingsecondary
 
-import com.rojoma.json.v3.codec.{JsonDecode, DecodeError}
-import com.rojoma.json.v3.ast.{JNull, JString, JValue}
-import com.socrata.computation_strategies.{StrategyType => ST, GeocodingParameterSchema}
-import com.socrata.datacoordinator.id.{StrategyType, ColumnId, UserColumnId}
+import com.rojoma.json.v3.codec.{DecodeError, JsonDecode}
+import com.rojoma.json.v3.ast.{JNull, JObject, JString, JValue}
+import com.rojoma.json.v3.util.JsonUtil
+import com.socrata.computation_strategies.{GeocodingParameterSchema, StrategyType => ST}
+import com.socrata.datacoordinator.id.{ColumnId, StrategyType, UserColumnId}
 import com.socrata.datacoordinator.secondary
 import com.socrata.datacoordinator.secondary._
-import com.socrata.datacoordinator.secondary.feedback.{HasStrategy, ComputationError, ComputationFailure, CookieSchema, ComputationHandler}
-import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
+import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure, ComputationHandler, CookieSchema, HasStrategy}
+import com.socrata.geocoders.{InternationalAddress, LatLon, OptionalGeocoder}
 import com.socrata.soql.types._
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 
@@ -24,7 +25,7 @@ case class GeocodeColumnInfo(cookie: CookieSchema, strategy: ComputationStrategy
   val postalCode = parameters.sources.postalCode.map(cookie.columnIdMap)
   val country = parameters.sources.country.map(cookie.columnIdMap)
 
-  def extractColumnValue(row: secondary.Row[SoQLValue],
+  private def extractColumnValue(row: secondary.Row[SoQLValue],
                          colId: Option[ColumnId],
                          canBeNumber: Boolean = false): Option[String] = {
     def wrongSoQLType(other: AnyRef): Nothing = throw new Exception(s"Expected value to be of type $SoQLText but got: $other")
@@ -39,6 +40,49 @@ case class GeocodeColumnInfo(cookie: CookieSchema, strategy: ComputationStrategy
         }
       case None => None
     }
+  }
+
+  private def extractLocation(row: secondary.Row[SoQLValue],
+                      colId: ColumnId): Option[SoQLLocation] = {
+    def wrongSoQLType(other: AnyRef): Nothing = throw new Exception(s"Expected value to be of type $SoQLText but got: $other")
+
+        row.get(colId) match {
+          case Some(SoQLNull) => None
+          case Some(x: SoQLLocation) => Some(x)
+          case Some(other) => wrongSoQLType(other)
+          case None => None
+        }
+  }
+
+  val isLocationType = targetColId == strategy.sourceColumnIds.head
+
+  val extract: secondary.Row[SoQLValue] => Tuple6[Option[String], Option[String], Option[String], Option[String], Option[String], Option[String]] =
+    if (isLocationType) extractAddressComponentsFromLocation(cookie.columnIdMap(targetColId))
+    else extractAddressComponentsFromMultipleColumns
+
+
+  private def extractAddressComponentsFromMultipleColumns(row: secondary.Row[SoQLValue]) = {
+    Tuple6(extractColumnValue(row, address),
+        extractColumnValue(row, locality),
+        extractColumnValue(row, subregion),
+        extractColumnValue(row, region),
+        extractColumnValue(row, postalCode, canBeNumber = true),
+        extractColumnValue(row, country))
+  }
+
+  private def extractAddressComponentsFromLocation(targetColumnId: ColumnId)(row: secondary.Row[SoQLValue]) = {
+
+    extractLocation(row, targetColumnId) match {
+      case None => Tuple6(None,None,None,None,None,None)
+      case Some(loc) =>
+        val jobj: JObject = JsonUtil.parseJson[JObject](loc.address.get).right.get
+        Tuple6(jobj.get("address").map(_.toString()),
+          jobj.get("city").map(_.toString()),
+          None,
+          jobj.get("state").map(_.toString()),
+          jobj.get("zip").map(_.toString()),
+          None)
+      }
   }
 }
 case class GeocodeRowInfo(address: Option[InternationalAddress], data: secondary.Row[SoQLValue], targetColId: UserColumnId)
@@ -57,12 +101,20 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
   }
 
   override def setupCell(colInfo: GeocodeColumnInfo, row: Row[SoQLValue]): GeocodeRowInfo = {
-    val address = colInfo.extractColumnValue(row, colInfo.address)
-    val locality = colInfo.extractColumnValue(row, colInfo.locality)
-    val subregion = colInfo.extractColumnValue(row, colInfo.subregion)
-    val region = colInfo.extractColumnValue(row, colInfo.region)
-    val postalCode = colInfo.extractColumnValue(row, colInfo.postalCode, canBeNumber = true) // just in case a postal code column ends up as a number column even though it _really_ shouldn't be
-    val country = colInfo.extractColumnValue(row, colInfo.country)
+
+//    val isLocationType = colInfo.targetColId == colInfo.strategy.sourceColumnIds.head
+//    val targetColumnId: ColumnId = colInfo.cookie.columnIdMap(colInfo.targetColId)
+//    colInfo.extractColumnValue(row, Some(targetColumnId))
+
+//    val address = colInfo.extractColumnValue(row, colInfo.address)
+//    val locality = colInfo.extractColumnValue(row, colInfo.locality)
+//    val subregion = colInfo.extractColumnValue(row, colInfo.subregion)
+//    val region = colInfo.extractColumnValue(row, colInfo.region)
+//    val postalCode = colInfo.extractColumnValue(row, colInfo.postalCode, canBeNumber = true) // just in case a postal code column ends up as a number column even though it _really_ shouldn't be
+//    val country = colInfo.extractColumnValue(row, colInfo.country)
+//
+    val (address,locality,subregion,region,postalCode,country) = colInfo.extract(row)
+
 
     val internationalAddress =
       if (Seq(address, locality, subregion, region, postalCode, country).forall(_.isEmpty)) {

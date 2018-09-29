@@ -1,16 +1,21 @@
 package com.socrata.geocodingsecondary
 
 import com.netflix.astyanax.AstyanaxContext
+import com.rojoma.json.v3.ast.{JNull, JValue}
 import com.rojoma.simplearm.v2.Resource
 import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
 import com.socrata.geocoders._
-import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient}
+import com.socrata.geocoders.caching.{CassandraCacheClient, NoopCacheClient}
 import com.socrata.geocodingsecondary.config.GeocodingSecondaryConfig
-import com.socrata.soql.types.{SoQLValue, SoQLType}
+import com.socrata.soql.types.{SoQLType, SoQLValue}
 import com.socrata.thirdparty.astyanax.AstyanaxFromConfig
-import com.typesafe.config.{ConfigFactory, Config}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.curator.x.discovery.strategies
+
+
+
+
 
 class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecondaryInstance(config) {
   // SecondaryWatcher will give me a config, but just in case fallback to config from my jar file
@@ -27,8 +32,10 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
     val geoConfig = config.geocoder
 
     def baseProvider: BaseGeocoder = geoConfig.mapQuest match {
-      case Some(e) => new MapQuestGeocoder(httpClient, e.appToken, { (_, _) => }) // retry count defaults to 5
-      case None => log.warn("No MapQuest config provided; using {}.", BaseNoopGeocoder.getClass); BaseNoopGeocoder
+      case Some(e) =>
+        new MapQuestGeocoder(httpClient, e.appToken, { (_, _) => }) // retry count defaults to 5
+      case None =>
+        new FakeGeocoder(10, 10)
     }
 
     def provider: Geocoder = {
