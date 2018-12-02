@@ -1,9 +1,11 @@
 package com.socrata.geocodingsecondary
 
 import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure}
-import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
-import com.socrata.soql.types.SoQLNull
-import org.scalatest.{ShouldMatchers, FunSuite}
+import com.socrata.datacoordinator.util.collection.ColumnIdMap
+import com.socrata.geocoders.{InternationalAddress, LatLon, OptionalGeocoder}
+import com.socrata.soql.types.{SoQLID, SoQLNull, SoQLPoint}
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import org.scalatest.{FunSuite, ShouldMatchers}
 
 class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
@@ -32,7 +34,19 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
   // note: this shouldn't happen with proper validation up stream
   test("Should transform a row missing source columns to an empty address") {
     val strategy = strategyInfo(sourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId)
+    val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, SoQLNull)
+    val dsInfo = handler.setupDataset(cookieSchema(strategy))
+    val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
+    handler.setupCell(colInfo, baseRow) should be (expected)
+  }
+
+  // note: this shouldn't happen with proper validation up stream
+  test("Should preserve computed column supplied value if source columns are nulls") {
+    val geometryFactory = new GeometryFactory
+    val soqlPoint = SoQLPoint(geometryFactory.createPoint(new Coordinate(1, 2)))
+    val strategy = strategyInfo(sourceColumnIds, parameters)
+    val baseRow = ColumnIdMap(id.id -> SoQLID(5), point.id -> soqlPoint)
+    val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, soqlPoint)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, baseRow) should be (expected)
@@ -44,7 +58,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform an row missing source columns with no optional parameters to an empty address") {
     val strategy = strategyInfo(sourceColumnIds, emptyParameters)
-    val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId)
+    val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, baseRow) should be (expected)
@@ -52,7 +66,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a full row with no optional parameters to an empty address") {
     val strategy = strategyInfo(sourceColumnIds, emptyParameters)
-    val expected = GeocodeRowInfo(emptyAddress, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(emptyAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -62,7 +76,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
   // only the values given in the `parameters` json blob are used
   test("Should transform a full row with no source columns") {
     val strategy = strategyInfo(emptySourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -70,7 +84,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with a full address") {
     val strategy = strategyInfo(sourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -78,7 +92,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with a SoQLNull value") {
     val strategy = strategyInfo(sourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(socrataAddressNoRegion, socrataRowNoRegion, targetColId)
+    val expected = GeocodeRowInfo(socrataAddressNoRegion, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
@@ -86,7 +100,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with partial optional parameters") {
     val strategy = strategyInfo(sourceColumnIds, parametersNoPostalCode)
-    val expected = GeocodeRowInfo(socrataAddressNoPostalCode, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(socrataAddressNoPostalCode, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -94,7 +108,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with SoQLNumber zip column") {
     val strategy = strategyInfo(sourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRowPostalCodeAsNumber, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRowPostalCodeAsNumber, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRowPostalCodeAsNumber) should be (expected)
@@ -102,7 +116,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with SoQLNull valued country column and use default") {
     val strategy = strategyInfo(sourceColumnIds, parameters)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRowNullCountry, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRowNullCountry, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRowNullCountry) should be (expected)
@@ -110,7 +124,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with no country column") {
     val strategy = strategyInfo(sourceColumnIds, parametersNoCountry)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -118,7 +132,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row using a default parameter value in place of a SoQLNull") {
     val strategy = strategyInfo(sourceColumnIds, parametersDefaultRegion)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
@@ -126,7 +140,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row using a default parameter value with no source column") {
     val strategy = strategyInfo(sourceColumnIds, parametersDefaultRegion)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
@@ -134,7 +148,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should transform a row with extra parameters") {
     val strategy = strategyInfo(sourceColumnIds, parametersWithExtra)
-    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId)
+    val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
     handler.setupCell(colInfo, socrataRow) should be (expected)
@@ -157,10 +171,10 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should compute results for both valid and invalid addresses") {
     val rows = Map(
-      0 -> Seq(GeocodeRowInfo(emptyAddress, emptyRow, targetColId)),
-      2 -> Seq(GeocodeRowInfo(socrataAddress, socrataRow, targetColId)),
-      3 -> Seq(GeocodeRowInfo(socrataDCAddress, socrataDCRow, targetColId)),
-      5 -> Seq(GeocodeRowInfo(nowhereAddress, nowhereRow, targetColId))
+      0 -> Seq(GeocodeRowInfo(emptyAddress, emptyRow, targetColId, SoQLNull)),
+      2 -> Seq(GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)),
+      3 -> Seq(GeocodeRowInfo(socrataDCAddress, socrataDCRow, targetColId, SoQLNull)),
+      5 -> Seq(GeocodeRowInfo(nowhereAddress, nowhereRow, targetColId, SoQLNull))
     )
     val expected = Right(Map(
       0 -> Map(targetColId -> SoQLNull),
@@ -173,6 +187,6 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
 
   test("Should return a ComputationFailure if geocoder throws during compute(.)") {
     val expected = Left(ComputationError(badAddressException.getMessage, Some(badAddressException)))
-    handler.compute(Map(0 -> Seq(GeocodeRowInfo(badAddress, badAddressRow, targetColId)))) should be (expected)
+    handler.compute(Map(0 -> Seq(GeocodeRowInfo(badAddress, badAddressRow, targetColId, SoQLNull)))) should be (expected)
   }
 }
