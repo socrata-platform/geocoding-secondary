@@ -101,6 +101,9 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
         val soqlValues = (sources,pointsHere).zipped.map { (source, point) =>
           val targetVal = source.targetValue match {
             case SoQLNull =>
+              // When custom geocoder is used in dsmapi that returns a null point and our standard geocoder returns a non null point,
+              // this will undesirably override the custom geocoder result with our standard result.
+              // TODO: Add custom geocoder capability to secondary-watcher-geocoding is a solution.
               point.fold[SoQLValue](SoQLNull) { case LatLon(lat, lon) =>
                 SoQLPoint(geometryFactory.get.createPoint(new Coordinate(lon, lat))) // Not at all sure this is correct!
               }
