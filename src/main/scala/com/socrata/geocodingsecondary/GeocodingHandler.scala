@@ -99,13 +99,15 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
         val (pointsHere, leftoverPoints) = points.splitAt(sources.length)
         assert(pointsHere.length == sources.length, "Geocoding returned too few results?")
         val soqlValues = (sources,pointsHere).zipped.map { (source, point) =>
-          val targetVal = source.address match {
-            case None => // Keep origin target value if source address is null
-              source.targetValue
-            case Some(_) =>
+          val targetVal = source.targetValue match {
+            case SoQLNull =>
               point.fold[SoQLValue](SoQLNull) { case LatLon(lat, lon) =>
                 SoQLPoint(geometryFactory.get.createPoint(new Coordinate(lon, lat))) // Not at all sure this is correct!
               }
+            case tv => tv // Keep origin target value if it is provided (not as null)
+              // TODO: Change geocoder.geocode prototype to geocode(addresses, targetValue) so that
+              // geocoder can choose to skip geocode earlier instead of ignoring the geocoded result.
+              // Hopefully before this change, rows coming from dsmui here are hitting the same cache.
           }
           source.targetColId -> targetVal
         }.toMap
