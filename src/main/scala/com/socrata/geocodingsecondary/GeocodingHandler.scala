@@ -78,7 +78,7 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
       }
 
     val targetColumnId = colInfo.cookie.columnIdMap(colInfo.targetColId)
-    val targetValue = row(targetColumnId)
+    val targetValue = row.getOrElse(targetColumnId, SoQLNull)
     GeocodeRowInfo(internationalAddress, row, colInfo.targetColId, targetValue)
   }
 
