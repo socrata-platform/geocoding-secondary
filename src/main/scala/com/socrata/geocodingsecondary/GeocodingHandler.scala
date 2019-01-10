@@ -98,21 +98,27 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
         val (row, sources) = rowSources
         val (pointsHere, leftoverPoints) = points.splitAt(sources.length)
         assert(pointsHere.length == sources.length, "Geocoding returned too few results?")
-        val soqlValues = (sources,pointsHere).zipped.map { (source, point) =>
-          val targetVal = source.targetValue match {
-            case SoQLNull =>
-              // When custom geocoder is used in dsmapi that returns a null point and our standard geocoder returns a non null point,
-              // this will undesirably override the custom geocoder result with our standard result.
-              // TODO: Add custom geocoder capability to secondary-watcher-geocoding is a solution.
-              point.fold[SoQLValue](SoQLNull) { case LatLon(lat, lon) =>
-                SoQLPoint(geometryFactory.get.createPoint(new Coordinate(lon, lat))) // Not at all sure this is correct!
+        val soqlValues = (sources,pointsHere).zipped.flatMap { (source, point) =>
+          source.address match {
+            case Some(_) =>
+              val targetVal = source.targetValue match {
+                case SoQLNull =>
+                  // When custom geocoder is used in dsmapi that returns a null point and our standard geocoder returns a non null point,
+                  // this will undesirably override the custom geocoder result with our standard result.
+                  // TODO: Add custom geocoder capability to secondary-watcher-geocoding is a solution.
+                  point.fold[SoQLValue](SoQLNull) { case LatLon(lat, lon) =>
+                    SoQLPoint(geometryFactory.get.createPoint(new Coordinate(lon, lat))) // Not at all sure this is correct!
+                  }
+                case tv => tv // Keep origin target value if it is provided (not as null)
+                // TODO: Change geocoder.geocode prototype to geocode(addresses, targetValue) so that
+                // geocoder can choose to skip geocode earlier instead of ignoring the geocoded result.
+                // Hopefully before this change, rows coming from dsmui here are hitting the same cache.
               }
-            case tv => tv // Keep origin target value if it is provided (not as null)
-              // TODO: Change geocoder.geocode prototype to geocode(addresses, targetValue) so that
-              // geocoder can choose to skip geocode earlier instead of ignoring the geocoded result.
-              // Hopefully before this change, rows coming from dsmui here are hitting the same cache.
+              Seq(source.targetColId -> targetVal)
+            case None => // receive row data before computation strategy is created.
+              // ignore/do not touch the row
+              None
           }
-          source.targetColId -> targetVal
         }.toMap
         val newAcc = acc + (row -> soqlValues)
         (newAcc, leftoverPoints)
