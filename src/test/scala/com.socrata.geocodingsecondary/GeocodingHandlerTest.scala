@@ -177,7 +177,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
       5 -> Seq(GeocodeRowInfo(nowhereAddress, nowhereRow, targetColId, SoQLNull))
     )
     val expected = Right(Map(
-      0 -> Map(targetColId -> SoQLNull),
+      0 -> Map.empty,
       2 -> Map(targetColId -> socrataPoint),
       3 -> Map(targetColId -> socrataDCPoint),
       5 -> Map(targetColId -> nowhereValue)
