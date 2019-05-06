@@ -1,13 +1,13 @@
 package com.socrata.geocodingsecondary
 
-import com.rojoma.json.v3.codec.{JsonDecode, DecodeError}
+import com.rojoma.json.v3.codec.{DecodeError, JsonDecode}
 import com.rojoma.json.v3.ast.{JNull, JString, JValue}
-import com.socrata.computation_strategies.{StrategyType => ST, GeocodingParameterSchema}
-import com.socrata.datacoordinator.id.{StrategyType, ColumnId, UserColumnId}
+import com.socrata.computation_strategies.{GeocodingParameterSchema, StrategyType => ST}
+import com.socrata.datacoordinator.id.{ColumnId, StrategyType, UserColumnId}
 import com.socrata.datacoordinator.secondary
 import com.socrata.datacoordinator.secondary._
-import com.socrata.datacoordinator.secondary.feedback.{HasStrategy, ComputationError, ComputationFailure, CookieSchema, ComputationHandler}
-import com.socrata.geocoders.{OptionalGeocoder, InternationalAddress, LatLon}
+import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure, ComputationHandler, CookieSchema, HasStrategy, Row => RowWithBeforeImage}
+import com.socrata.geocoders.{InternationalAddress, LatLon, OptionalGeocoder}
 import com.socrata.soql.types._
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 
@@ -56,7 +56,8 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
     new GeocodeColumnInfo(cookie, strategy, targetColId)
   }
 
-  override def setupCell(colInfo: GeocodeColumnInfo, row: Row[SoQLValue]): GeocodeRowInfo = {
+  override def setupCell(colInfo: GeocodeColumnInfo, rowWithBeforeImage: RowWithBeforeImage[SoQLValue]): GeocodeRowInfo = {
+    val row = rowWithBeforeImage.data
     val address = colInfo.extractColumnValue(row, colInfo.address)
     val locality = colInfo.extractColumnValue(row, colInfo.locality)
     val subregion = colInfo.extractColumnValue(row, colInfo.subregion)
@@ -78,8 +79,14 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
       }
 
     val targetColumnId = colInfo.cookie.columnIdMap(colInfo.targetColId)
+    val targetValueBefore = rowWithBeforeImage.oldData.flatMap(_.get(targetColumnId)).getOrElse(SoQLNull)
     val targetValue = row.getOrElse(targetColumnId, SoQLNull)
-    GeocodeRowInfo(internationalAddress, row, colInfo.targetColId, targetValue)
+
+    val targetValueNullIfNoChange =
+      if (targetValueBefore == targetValue) SoQLNull // SoQLNull will cause re-compute
+      else targetValue
+
+    GeocodeRowInfo(internationalAddress, row, colInfo.targetColId, targetValueNullIfNoChange)
   }
 
   override def compute[RowHandle](sources: Map[RowHandle, Seq[GeocodeRowInfo]]): Either[ComputationFailure, Map[RowHandle, Map[UserColumnId, SoQLValue]]] = {
