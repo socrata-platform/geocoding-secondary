@@ -82,6 +82,11 @@ class GeocodingHandler(geocoder: OptionalGeocoder) extends ComputationHandler[So
     val targetValueBefore = rowWithBeforeImage.oldData.flatMap(_.get(targetColumnId)).getOrElse(SoQLNull)
     val targetValue = row.getOrElse(targetColumnId, SoQLNull)
 
+    // Giving a different address with the same point does undesirably cause us to compute and overwrite provided user data.
+    // But the whole feedback mechanism loses the information about whether a point is given by user by the time it gets to
+    // the feeedback mechanism.
+    // In that case, upsert again will force write the computed value.  Or better yet, computation should not be used at all
+    // if they are using their own geocoders.
     val targetValueNullIfNoChange =
       if (targetValueBefore == targetValue) SoQLNull // SoQLNull will cause re-compute
       else targetValue
