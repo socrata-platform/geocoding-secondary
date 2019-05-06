@@ -1,6 +1,6 @@
 package com.socrata.geocodingsecondary
 
-import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure}
+import com.socrata.datacoordinator.secondary.feedback.{ComputationError, ComputationFailure, Row => RowWithBeforeImage}
 import com.socrata.datacoordinator.util.collection.ColumnIdMap
 import com.socrata.geocoders.{InternationalAddress, LatLon, OptionalGeocoder}
 import com.socrata.soql.types.{SoQLID, SoQLNull, SoQLPoint}
@@ -37,7 +37,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, baseRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(baseRow, None)) should be (expected)
   }
 
   // note: this shouldn't happen with proper validation up stream
@@ -49,7 +49,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, soqlPoint)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, baseRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(baseRow, None)) should be (expected)
   }
 
   // note: the list source columns ids in the computation strategy should match the
@@ -61,7 +61,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(emptyAddress, baseRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, baseRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(baseRow, None)) should be (expected)
   }
 
   test("Should transform a full row with no optional parameters to an empty address") {
@@ -69,7 +69,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(emptyAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   // i.e. the column ids passed in the computation strategy are not actually used in the computation
@@ -79,7 +79,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   test("Should transform a row with a full address") {
@@ -87,7 +87,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   test("Should transform a row with a SoQLNull value") {
@@ -95,7 +95,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddressNoRegion, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
+    handler.setupCell(colInfo,  RowWithBeforeImage(socrataRowNoRegion, None)) should be (expected)
   }
 
   test("Should transform a row with partial optional parameters") {
@@ -103,7 +103,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddressNoPostalCode, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   test("Should transform a row with SoQLNumber zip column") {
@@ -111,7 +111,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRowPostalCodeAsNumber, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRowPostalCodeAsNumber) should be (expected)
+    handler.setupCell(colInfo,  RowWithBeforeImage(socrataRowPostalCodeAsNumber, None)) should be (expected)
   }
 
   test("Should transform a row with SoQLNull valued country column and use default") {
@@ -119,7 +119,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRowNullCountry, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRowNullCountry) should be (expected)
+    handler.setupCell(colInfo,  RowWithBeforeImage(socrataRowNullCountry, None)) should be (expected)
   }
 
   test("Should transform a row with no country column") {
@@ -127,7 +127,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   test("Should transform a row using a default parameter value in place of a SoQLNull") {
@@ -135,7 +135,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
+    handler.setupCell(colInfo,  RowWithBeforeImage(socrataRowNoRegion, None)) should be (expected)
   }
 
   test("Should transform a row using a default parameter value with no source column") {
@@ -143,7 +143,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRowNoRegion, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRowNoRegion) should be (expected)
+    handler.setupCell(colInfo,  RowWithBeforeImage(socrataRowNoRegion, None)) should be (expected)
   }
 
   test("Should transform a row with extra parameters") {
@@ -151,7 +151,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
     val expected = GeocodeRowInfo(socrataAddress, socrataRow, targetColId, SoQLNull)
     val dsInfo = handler.setupDataset(cookieSchema(strategy))
     val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-    handler.setupCell(colInfo, socrataRow) should be (expected)
+    handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None)) should be (expected)
   }
 
   test("Should throw a MalformedParametersException when transforming a row with malformed parameters") {
@@ -159,7 +159,7 @@ class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
       val strategy = strategyInfo(sourceColumnIds, parametersMalformed)
       val dsInfo = handler.setupDataset(cookieSchema(strategy))
       val colInfo = handler.setupColumn(dsInfo, strategy, targetColId)
-      handler.setupCell(colInfo, socrataRow)
+      handler.setupCell(colInfo, RowWithBeforeImage(socrataRow, None))
     }
   }
 

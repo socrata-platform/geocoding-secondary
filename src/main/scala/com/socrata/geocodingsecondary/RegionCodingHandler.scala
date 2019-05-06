@@ -11,6 +11,7 @@ import com.socrata.datacoordinator.id.{ColumnId, StrategyType, UserColumnId}
 import com.socrata.computation_strategies.{StrategyType => ST, GeoRegionMatchOnStringParameterSchema, GeoRegionMatchOnPointParameterSchema}
 import com.socrata.datacoordinator.secondary.{ComputationStrategyInfo, Row}
 import com.socrata.datacoordinator.secondary.feedback._
+import com.socrata.datacoordinator.secondary.feedback.{Row => RowWithBeforeImage}
 import com.socrata.http.client.exceptions.HttpClientException
 import com.socrata.http.client.{RequestBuilder, HttpClient}
 import com.socrata.http.server.util.RequestId
@@ -75,7 +76,8 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
 
   override def setupDataset(cookie: CookieSchema) = cookie
 
-  override def setupCell(colInfo: PerColumnData, row: Row[SoQLValue]): RegionCodeRowInfo = {
+  override def setupCell(colInfo: PerColumnData, rowWithBeforeImage: RowWithBeforeImage[SoQLValue]): RegionCodeRowInfo = {
+    val row = rowWithBeforeImage.data
     RegionCodeRowInfo(row, colInfo.sourceColId, colInfo.targetColId, colInfo.userTargetColId, colInfo.endpoint)
   }
 
