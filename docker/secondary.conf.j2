@@ -3,7 +3,7 @@ instances {
     secondaryType = geocoding
     numWorkers = {{ GEOCODING_SECONDARY_NUM_WORKERS }}
     config = {
-      base-batch-size = 40000
+      base-batch-size = {{ GEOCODING_SECONDARY_ROW_BATCH_SIZE }}
       data-coordinator-retries = 5
       internal-data-coordinator-retries = 5
       computation-retries = 5
