@@ -15,8 +15,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   def this(rawConfig: Config) = this(new GeocodingSecondaryConfig(rawConfig.withFallback(
     ConfigFactory.load(classOf[GeocodingSecondary].getClassLoader).getConfig("com.socrata.geocoding-secondary"))))
 
-  val cluster = res(CassandraFromConfig.unmanaged(config.cassandra))
-  val session = res(cluster.connect(config.cassandra.keyspace))
+  val session = res(CassandraFromConfig.unmanaged(config.cassandra))
 
   val geocoderProvider: OptionalGeocoder = locally {
     val geoConfig = config.geocoder

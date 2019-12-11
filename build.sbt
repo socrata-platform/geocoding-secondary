@@ -10,7 +10,7 @@ name := "secondary-watcher-geocoding"
 libraryDependencies ++= Seq(
   "com.rojoma" %% "rojoma-json-v3" % "3.10.0",
   "com.socrata" %% "computation-strategies" % "0.1.3",
-  "com.socrata" %% "geocoders" % "2.3.0",
+  "com.socrata" %% "geocoders" % "3.0.0",
   "com.socrata" %% "secondarylib-feedback" % "3.6.1",
   "javax.servlet" % "javax.servlet-api" % "3.1.0", // needed for socrata-http-server
   "com.socrata" %% "socrata-http-server" % "3.12.0", // we are just using RequestId from this
@@ -26,6 +26,8 @@ test in assembly := {}
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF", "io.netty.versions.properties") =>
     MergeStrategy.first
+  case PathList("module-info.class") =>
+    MergeStrategy.discard
   case other =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(other)
