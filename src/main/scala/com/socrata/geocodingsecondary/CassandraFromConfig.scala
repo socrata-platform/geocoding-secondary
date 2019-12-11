@@ -4,7 +4,7 @@ import scala.collection.JavaConverters._
 
 import java.net.{InetSocketAddress, InetAddress}
 
-import com.datastax.driver.core.{Session, Cluster}
+import com.datastax.oss.driver.api.core.CqlSession
 import com.socrata.thirdparty.typesafeconfig.CassandraConfig
 import com.rojoma.simplearm.v2._
 
@@ -12,7 +12,7 @@ object CassandraFromConfig {
   def apply(config: CassandraConfig) = managed {
     unmanaged(config)
   }.flatMap { cluster =>
-    managed(cluster.connect(config.keyspace))
+    managed(cluster)
   }
 
   private def hackPort(n: Int): Int =
@@ -21,7 +21,7 @@ object CassandraFromConfig {
       case other => other
     }
 
-  def unmanaged(config: CassandraConfig): Cluster = {
+  def unmanaged(config: CassandraConfig): CqlSession = {
     val addresses = config.connectionPool.seeds.split(',').toSeq.map { seedString =>
       seedString.indexOf(':') match {
         case -1 =>
@@ -30,9 +30,9 @@ object CassandraFromConfig {
           new InetSocketAddress(seedString.take(n), hackPort(seedString.drop(n+1).toInt))
       }
     }
-    Cluster.builder.
-      addContactPointsWithPorts(addresses.asJava).
-      withPort(hackPort(config.connectionPool.port)).
+    CqlSession.builder.
+      addContactPoints(addresses.asJava).
+      withKeyspace(config.keyspace).
       build()
   }
 }
