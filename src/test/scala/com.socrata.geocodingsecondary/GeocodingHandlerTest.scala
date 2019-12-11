@@ -5,9 +5,9 @@ import com.socrata.datacoordinator.util.collection.ColumnIdMap
 import com.socrata.geocoders.{InternationalAddress, LatLon, OptionalGeocoder}
 import com.socrata.soql.types.{SoQLID, SoQLNull, SoQLPoint}
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
-import org.scalatest.{FunSuite, ShouldMatchers}
+import org.scalatest.{FunSuite, Matchers}
 
-class GeocodingHandlerTest extends FunSuite with ShouldMatchers {
+class GeocodingHandlerTest extends FunSuite with Matchers {
 
   import TestData._
 

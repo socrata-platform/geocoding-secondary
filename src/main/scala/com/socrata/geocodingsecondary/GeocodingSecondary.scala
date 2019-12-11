@@ -1,6 +1,5 @@
 package com.socrata.geocodingsecondary
 
-import com.netflix.astyanax.AstyanaxContext
 import com.rojoma.simplearm.v2.Resource
 import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
@@ -8,7 +7,6 @@ import com.socrata.geocoders._
 import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient}
 import com.socrata.geocodingsecondary.config.GeocodingSecondaryConfig
 import com.socrata.soql.types.{SoQLValue, SoQLType}
-import com.socrata.thirdparty.astyanax.AstyanaxFromConfig
 import com.typesafe.config.{ConfigFactory, Config}
 import org.apache.curator.x.discovery.strategies
 
@@ -17,11 +15,8 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   def this(rawConfig: Config) = this(new GeocodingSecondaryConfig(rawConfig.withFallback(
     ConfigFactory.load(classOf[GeocodingSecondary].getClassLoader).getConfig("com.socrata.geocoding-secondary"))))
 
-  implicit def astyanaxResource[T] = new Resource[AstyanaxContext[T]] {
-    def close(k: AstyanaxContext[T]) = k.shutdown()
-  }
-  val keyspace = res(AstyanaxFromConfig.unmanaged(config.cassandra))
-  guarded(keyspace.start())
+  val cluster = res(CassandraFromConfig.unmanaged(config.cassandra))
+  val session = res(cluster.connect(config.cassandra.keyspace))
 
   val geocoderProvider: OptionalGeocoder = locally {
     val geoConfig = config.geocoder
@@ -34,7 +29,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
     def provider: Geocoder = {
       val cache = geoConfig.cache match {
         case Some(cacheConfig) =>
-          new CassandraCacheClient(keyspace.getClient, cacheConfig.columnFamily, cacheConfig.ttl)
+          new CassandraCacheClient(session, cacheConfig.columnFamily, cacheConfig.ttl)
         case None =>
           log.warn("No cache config provided; using {}.", NoopCacheClient.getClass)
           NoopCacheClient
@@ -63,7 +58,7 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
 
   override val computationHandlers: Seq[ComputationHandler[SoQLType, SoQLValue]] =
     List(new GeocodingHandler(geocoderProvider),
-         new RegionCodingPointHandler(httpClient, regionCoderURL, config.regioncoder.connectTimeout, config.regioncoder.readTimeout, config.regioncoder.retries),
-         new RegionCodingStringHandler(httpClient, regionCoderURL, config.regioncoder.connectTimeout, config.regioncoder.readTimeout, config.regioncoder.retries))
+         new RegionCodingPointHandler(httpClient, regionCoderURL _, config.regioncoder.connectTimeout, config.regioncoder.readTimeout, config.regioncoder.retries),
+         new RegionCodingStringHandler(httpClient, regionCoderURL _, config.regioncoder.connectTimeout, config.regioncoder.readTimeout, config.regioncoder.retries))
 
 }
