@@ -33,6 +33,7 @@ object CassandraFromConfig {
     CqlSession.builder.
       addContactPoints(addresses.asJava).
       withKeyspace(config.keyspace).
+      withLocalDatacenter(config.connectionPool.datacenter.getOrElse(throw new Exception("No datacenter defined in the cassandra config"))).
       build()
   }
 }

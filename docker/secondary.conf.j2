@@ -28,6 +28,7 @@ instances {
           port = 9160
           max-connections-per-host = 1
           seeds = {{ CASSANDRA_CP_SEEDS }}
+          datacenter = "{{ CASSANDRA_DC }}"
           connect-timeout = "500ms"
         }
       }
