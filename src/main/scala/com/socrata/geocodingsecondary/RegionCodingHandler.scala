@@ -179,6 +179,8 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
   def regionCode(endpoint: String, allCells: JArray): Seq[Option[Int]] = {
     def loop(retriesLeft: Int, cells: JArray): Seq[Option[Int]] = {
       try {
+        if (cells.length == 0) return Seq()
+
         val base =
           RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
             connectTimeoutMS(connectTimeout.toMillis.toInt).
@@ -220,7 +222,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
       }
       if(retriesLeft == 0) throw ComputationErrorException("Ran out of retries while region coding")
       else {
-        val (left, right) = cells.toArray.splitAt(math.ceil(cells.length / 2).toInt)
+        val (left, right) = cells.toArray.splitAt(cells.length / 2)
         // yea this is extemely not tail recursive but it wasn't before i got here, and retries is a
         // small number
         loop(retriesLeft - 1, JArray(left)) ++ loop(retriesLeft - 1, JArray(right))
