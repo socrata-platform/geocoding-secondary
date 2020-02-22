@@ -177,14 +177,16 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
     }
 
   def regionCode(endpoint: String, allCells: JArray): Seq[Option[Int]] = {
-    def loop(retriesLeft: Int): Seq[Option[Int]] = {
+    def loop(retriesLeft: Int, cells: JArray): Seq[Option[Int]] = {
       try {
+        if (cells.length == 0) return Seq()
+
         val base =
           RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
             connectTimeoutMS(connectTimeout.toMillis.toInt).
             receiveTimeoutMS(readTimeout.toMillis.toInt).
             addHeader((RequestId.ReqIdHeader, MDC.get("job-id")))
-        for(resp <- http.execute(base.json(JValueEventIterator(allCells)))) {
+        for(resp <- http.execute(base.json(JValueEventIterator(cells)))) {
           resp.resultCode match {
             case 200 =>
               try {
@@ -219,9 +221,17 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
           // and retry
       }
       if(retriesLeft == 0) throw ComputationErrorException("Ran out of retries while region coding")
-      else loop(retriesLeft - 1)
+      else {
+        val (left, right) = cells.toArray.splitAt(cells.length / 2)
+        // yea this is extemely not tail recursive but it wasn't before i got here, and retries is a
+        // small number
+        loop(retriesLeft - 1, JArray(left)) ++ loop(retriesLeft - 1, JArray(right))
+      }
     }
-    loop(retries)
+
+    // Try it with all the cells first (max batch size)
+    // If it fails, we'll start reducing the batch size
+    loop(retries, allCells)
   }
 
   def mergeWith[A, B](xs: Map[A, B], ys: Map[A, B])(f: (B, B) => B): Map[A, B] =
