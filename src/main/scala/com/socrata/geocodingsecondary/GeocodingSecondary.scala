@@ -4,7 +4,8 @@ import com.rojoma.simplearm.v2.Resource
 import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
 import com.socrata.geocoders._
-import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient}
+import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient, PostgresqlCacheClient}
+import com.socrata.geocoders.config.CacheConfig
 import com.socrata.geocodingsecondary.config.GeocodingSecondaryConfig
 import com.socrata.soql.types.{SoQLValue, SoQLType}
 import com.typesafe.config.{ConfigFactory, Config}
@@ -15,26 +16,45 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
   def this(rawConfig: Config) = this(new GeocodingSecondaryConfig(rawConfig.withFallback(
     ConfigFactory.load(classOf[GeocodingSecondary].getClassLoader).getConfig("com.socrata.geocoding-secondary"))))
 
-  val session = res(CassandraFromConfig.unmanaged(config.cassandra))
-
   val geocoderProvider: OptionalGeocoder = locally {
     val geoConfig = config.geocoder
 
-    def baseProvider: BaseGeocoder = geoConfig.mapQuest match {
+    val cacheClient =
+      geoConfig.cache.map { cc =>
+        cc.preference match {
+          case Some(CacheConfig.Postgresql) =>
+            config.postgresql match {
+              case Some(pg) =>
+                val dataSource = res(PostgresqlFromConfig.unmanaged(pg))
+                new PostgresqlCacheClient(dataSource, cc.ttl)
+              case None =>
+                throw new Exception("Postgresql cache requested but no postgresql configured")
+            }
+          case Some(CacheConfig.Cassandra) =>
+            config.cassandra match {
+              case Some(cass) =>
+                val session = res(CassandraFromConfig.unmanaged(cass))
+                new CassandraCacheClient(session, CassandraCacheClient.columnFamily, cc.ttl)
+              case None =>
+                throw new Exception("Cassandra cache requested but no cassandra configured")
+            }
+          case Some(CacheConfig.None) =>
+            NoopCacheClient
+          case None =>
+            throw new Exception("Must porvide a geocoding cache preference")
+        }
+      }.getOrElse {
+        log.warn("No cache config provided; using {}.", NoopCacheClient.getClass)
+        NoopCacheClient
+      }
+
+    val baseProvider: BaseGeocoder = geoConfig.mapQuest match {
       case Some(e) => new MapQuestGeocoder(httpClient, e.appToken, { (_, _) => }) // retry count defaults to 5
       case None => log.warn("No MapQuest config provided; using {}.", BaseNoopGeocoder.getClass); BaseNoopGeocoder
     }
 
-    def provider: Geocoder = {
-      val cache = geoConfig.cache match {
-        case Some(cacheConfig) =>
-          new CassandraCacheClient(session, cacheConfig.columnFamily, cacheConfig.ttl)
-        case None =>
-          log.warn("No cache config provided; using {}.", NoopCacheClient.getClass)
-          NoopCacheClient
-      }
-      new CachingGeocoderAdapter(cache, baseProvider, { _ => }, geoConfig.filterMultipier)
-    }
+    val provider: Geocoder =
+      new CachingGeocoderAdapter(cacheClient, baseProvider, { _ => }, geoConfig.filterMultipier)
 
     new OptionRemoverGeocoder(provider, multiplier = 1 /* we don't want to batch filtering out Nones */)
   }

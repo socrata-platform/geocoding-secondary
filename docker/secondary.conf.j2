@@ -33,10 +33,23 @@ instances {
         }
       }
 
+      postgresql {
+        app-name = "geocoding secondary {{ GEOCODING_SECONDARY_INSTANCE }}",
+        tcp-keep-alive = true,
+        c3p0 = {
+          maxPoolSize = 20
+          idleConnectionTestPeriod = 60
+          testConnectionOnCheckin = true
+          preferredTestQuery = "SELECT 1"
+          maxIdleTimeExcessConnections = 300
+        }
+        include "/dev/shm/secondary-watcher-geocoding-pg-cache-secrets.conf"
+      }
+
       geocoder {
         filter-multipier = 1
         cache {
-          column-family = geocode_cache
+          preference = {{ GEOCODING_CACHE_PREFERENCE }}
           ttl = 60 days
         }
         mapquest {
