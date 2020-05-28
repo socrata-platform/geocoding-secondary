@@ -185,7 +185,7 @@ abstract class AbstractRegionCodingHandler(http: HttpClient,
           RequestBuilder(new java.net.URI(urlPrefix + endpoint)).
             connectTimeoutMS(connectTimeout.toMillis.toInt).
             receiveTimeoutMS(readTimeout.toMillis.toInt).
-            addHeader((RequestId.ReqIdHeader, MDC.get("job-id")))
+            addHeader(("X-Socrata-JobId", MDC.get("job-id")))
         for(resp <- http.execute(base.json(JValueEventIterator(cells)))) {
           resp.resultCode match {
             case 200 =>
