@@ -20,19 +20,6 @@ instances {
 
       data-coordinator-service = "data-coordinator"
 
-      cassandra {
-        cluster = "My Cluster"
-        keyspace = "delta_importer_2"
-        connection-pool {
-          name = "Cassandra Pool"
-          port = 9160
-          max-connections-per-host = 1
-          seeds = {{ CASSANDRA_CP_SEEDS }}
-          datacenter = "{{ CASSANDRA_DC }}"
-          connect-timeout = "500ms"
-        }
-      }
-
       postgresql {
         app-name = "geocoding secondary {{ GEOCODING_SECONDARY_INSTANCE }}",
         tcp-keep-alive = true,
