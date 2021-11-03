@@ -10,7 +10,7 @@ name := "secondary-watcher-geocoding"
 libraryDependencies ++= Seq(
   "com.mchange" % "c3p0" % "0.9.5.5",
   "org.postgresql" % "postgresql" % "42.2.12",
-  "com.rojoma" %% "rojoma-json-v3" % "3.10.0",
+  "com.rojoma" %% "rojoma-json-v3" % "3.14.0",
   "com.socrata" %% "computation-strategies" % "0.1.3",
   "com.socrata" %% "geocoders" % "4.0.0",
   "com.socrata" %% "secondarylib-feedback" % "3.8.11",
