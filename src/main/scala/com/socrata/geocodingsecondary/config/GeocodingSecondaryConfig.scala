@@ -2,13 +2,10 @@ package com.socrata.geocodingsecondary.config
 
 import com.socrata.datacoordinator.secondary.feedback.instance.config.FeedbackSecondaryInstanceConfig
 import com.socrata.geocoders.config.{CacheConfig, MapQuestConfig}
-import com.socrata.thirdparty.typesafeconfig.{CassandraConfig, ConfigClass, C3P0Propertizer}
+import com.socrata.thirdparty.typesafeconfig.{ConfigClass, C3P0Propertizer}
 import com.typesafe.config.{ConfigFactory, Config}
 
 class GeocodingSecondaryConfig(config: Config = ConfigFactory.load().getConfig("com.socrata.geocoding-secondary")) extends FeedbackSecondaryInstanceConfig(config, "") {
-  val cassandra = optionally(getRawConfig("cassandra")).map { _ =>
-    getConfig("cassandra", new CassandraConfig(_, _))
-  }
   val postgresql = optionally(getRawConfig("postgresql")).map { _ =>
     getConfig("postgresql", new PostgresqlConfig(_, _))
   }

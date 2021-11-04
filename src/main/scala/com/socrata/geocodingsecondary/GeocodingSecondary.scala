@@ -4,7 +4,7 @@ import com.rojoma.simplearm.v2.Resource
 import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
 import com.socrata.geocoders._
-import com.socrata.geocoders.caching.{NoopCacheClient, CassandraCacheClient, PostgresqlCacheClient}
+import com.socrata.geocoders.caching.{NoopCacheClient, PostgresqlCacheClient}
 import com.socrata.geocoders.config.CacheConfig
 import com.socrata.geocodingsecondary.config.GeocodingSecondaryConfig
 import com.socrata.soql.types.{SoQLValue, SoQLType}
@@ -29,14 +29,6 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
                 new PostgresqlCacheClient(dataSource, cc.ttl)
               case None =>
                 throw new Exception("Postgresql cache requested but no postgresql configured")
-            }
-          case Some(CacheConfig.Cassandra) =>
-            config.cassandra match {
-              case Some(cass) =>
-                val session = res(CassandraFromConfig.unmanaged(cass))
-                new CassandraCacheClient(session, CassandraCacheClient.columnFamily, cc.ttl)
-              case None =>
-                throw new Exception("Cassandra cache requested but no cassandra configured")
             }
           case Some(CacheConfig.None) =>
             NoopCacheClient
