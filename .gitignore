@@ -7,3 +7,4 @@ target/
 sbt-test.log
 configs/local*.conf
 /*.log
+/.bsp/

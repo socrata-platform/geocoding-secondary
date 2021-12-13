@@ -23,14 +23,14 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
 
-test in assembly := {}
+assembly/test := {}
 
-assemblyMergeStrategy in assembly := {
+assembly/assemblyMergeStrategy := {
   case PathList("META-INF", "io.netty.versions.properties") =>
     MergeStrategy.first
   case PathList("module-info.class") =>
     MergeStrategy.discard
   case other =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    val oldStrategy = (assembly/assemblyMergeStrategy).value
     oldStrategy(other)
 }
