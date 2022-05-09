@@ -13,13 +13,13 @@ libraryDependencies ++= Seq(
   "com.rojoma" %% "rojoma-json-v3" % "3.14.0",
   "com.socrata" %% "computation-strategies" % "0.1.3",
   "com.socrata" %% "geocoders" % "4.1.0",
-  "com.socrata" %% "secondarylib-feedback" % "3.8.11" exclude("org.slf4j", "slf4j-log4j12"),
+  "com.socrata" %% "secondarylib-feedback" % "3.9.0" exclude("org.slf4j", "slf4j-log4j12"),
   "javax.servlet" % "javax.servlet-api" % "3.1.0", // needed for socrata-http-server
-  "com.socrata" %% "socrata-http-server" % "3.13.3", // we are just using RequestId from this
-  "com.socrata" %% "socrata-curator-utils" % "1.2.0",
-  "com.socrata" %% "socrata-thirdparty-utils" % "5.0.0",
-  "com.socrata" %% "soql-types" % "2.16.1",
-  "com.typesafe" % "config" % "1.2.0",
+  "com.socrata" %% "socrata-http-server" % "3.15.4", // we are just using RequestId from this
+  "com.socrata" %% "socrata-curator-utils" % "1.2.0" ,
+  "com.socrata" %% "socrata-thirdparty-utils" % "5.0.0" ,
+  "com.socrata" %% "soql-types" % "4.0.3",
+  "com.typesafe" % "config" % "1.2.1",
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
 
