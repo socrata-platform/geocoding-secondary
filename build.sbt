@@ -16,8 +16,8 @@ libraryDependencies ++= Seq(
   "com.socrata" %% "secondarylib-feedback" % "3.9.0" exclude("org.slf4j", "slf4j-log4j12"),
   "javax.servlet" % "javax.servlet-api" % "3.1.0", // needed for socrata-http-server
   "com.socrata" %% "socrata-http-server" % "3.15.4", // we are just using RequestId from this
-  "com.socrata" %% "socrata-curator-utils" % "1.2.0" ,
-  "com.socrata" %% "socrata-thirdparty-utils" % "5.0.0" ,
+  "com.socrata" %% "socrata-curator-utils" % "1.2.0",
+  "com.socrata" %% "socrata-thirdparty-utils" % "5.0.0",
   "com.socrata" %% "soql-types" % "4.0.3",
   "com.typesafe" % "config" % "1.2.1",
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
