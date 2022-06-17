@@ -1,3 +1,6 @@
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneOffset}
+
 organization := "com.socrata"
 scalaVersion := "2.12.8"
 
@@ -34,3 +37,23 @@ assembly/assemblyMergeStrategy := {
     val oldStrategy = (assembly/assemblyMergeStrategy).value
     oldStrategy(other)
 }
+
+releaseVersion := { lastVerRaw =>
+  // We want three-segment versions unless we release more than once in a day, in which
+  // case we'll append the current time as a submicro component.
+  val VersionAsDate = """^(\d+\.\d+\.\d+)(?:\D.*)?$""".r
+  val shortPattern = "yyyy.MM.dd"
+  val longPattern = s"$shortPattern.HHmm"
+  val now = Instant.now()
+  val optimisticNextVer = DateTimeFormatter.ofPattern(shortPattern).withZone(ZoneOffset.UTC).format(now)
+  lastVerRaw match {
+    case VersionAsDate(lastDate) if lastDate == optimisticNextVer =>
+      DateTimeFormatter.ofPattern(longPattern).withZone(ZoneOffset.UTC).format(now)
+    case _ =>
+      optimisticNextVer
+  }
+}
+
+releaseNextVersion := { lastVer => lastVer + "-DEVELOPMENT" }
+
+releaseProcess := releaseProcess.value.filterNot(Set(ReleaseTransformations.publishArtifacts))
