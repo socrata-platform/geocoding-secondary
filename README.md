@@ -2,7 +2,7 @@
 Asynchronous NBE geocoding and region coding service
 
 ## Design
-**geocoding-secondary** is a _feedback_ secondary. [What is a feedback secondary?](https://docs.google.com/document/d/1feNpBc8mbEi5CF7sDmvASkMyISJhLofbPuFM4jaNL14/edit) Like other secondaries it runs as an instance of secondary-watcher. But instead of writing to its own store, it _feeds back_ its computations to `truth` by posting mutation scripts to data-coordinator.
+**geocoding-secondary** is a _feedback_ secondary. [What is a feedback secondary?](https://socrata.atlassian.net/wiki/spaces/PD/pages/2489122844/Feedback+Secondary+Design) Like other secondaries it runs as an instance of secondary-watcher. But instead of writing to its own store, it _feeds back_ its computations to `truth` by posting mutation scripts to data-coordinator.
 
 ## Usage
 **geocoding-secondary** operates on _computed columns_ with computation strategies of the following types:
