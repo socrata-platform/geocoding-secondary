@@ -39,9 +39,18 @@ instances {
           preference = {{ GEOCODING_CACHE_PREFERENCE }}
           ttl = 60 days
         }
-        mapquest {
+        geocoder {
+          type = {{ GEOCODING_BACKEND }}
+          # This is unfortunately named (indeed, unfortunately
+          # implemented altogether; this should be either an include
+          # or an env var splice at the typesafe-confg level).  But's
+          # just the app token, whicever backend is being used.
           {{ MAPQUEST_APP_TOKEN_LINE }}
           retry-count = 5
+
+          # these only has an effect if type is esri
+          host = "geocode.arcgis.com"
+          batch-size-refresh = 1h
         }
       }
     }
