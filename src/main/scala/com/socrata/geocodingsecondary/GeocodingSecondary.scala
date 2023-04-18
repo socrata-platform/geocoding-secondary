@@ -5,7 +5,7 @@ import com.socrata.datacoordinator.secondary.feedback.ComputationHandler
 import com.socrata.datacoordinator.secondary.feedback.instance.FeedbackSecondaryInstance
 import com.socrata.geocoders._
 import com.socrata.geocoders.caching.{NoopCacheClient, PostgresqlCacheClient}
-import com.socrata.geocoders.config.CacheConfig
+import com.socrata.geocoders.config.{CacheConfig, MapQuestConfig, EsriConfig}
 import com.socrata.geocodingsecondary.config.GeocodingSecondaryConfig
 import com.socrata.soql.types.{SoQLValue, SoQLType}
 import com.typesafe.config.{ConfigFactory, Config}
@@ -40,8 +40,9 @@ class GeocodingSecondary(config: GeocodingSecondaryConfig) extends FeedbackSecon
         NoopCacheClient
       }
 
-    val baseProvider: BaseGeocoder = geoConfig.mapQuest match {
-      case Some(e) => new MapQuestGeocoder(httpClient, e.appToken, { (_, _) => }) // retry count defaults to 5
+    val baseProvider: BaseGeocoder = geoConfig.geocoder match {
+      case Some(mq: MapQuestConfig) => new MapQuestGeocoder(httpClient, mq.appToken, { (_, _) => }, mq.retryCount)
+      case Some(e: EsriConfig) => new EsriGeocoder(httpClient, e.appToken, e.host, e.batchSizeRefresh, { (_, _) => }, e.retryCount)
       case None => log.warn("No MapQuest config provided; using {}.", BaseNoopGeocoder.getClass); BaseNoopGeocoder
     }
 
