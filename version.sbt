@@ -1,1 +1,1 @@
-ThisBuild / version := "2023.04.27-DEVELOPMENT"
+ThisBuild / version := "2023.05.12"
