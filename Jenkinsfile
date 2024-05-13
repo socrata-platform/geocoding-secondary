@@ -30,6 +30,23 @@ pipeline {
     DEPLOY_PATTERN = "${service}*"
   }
   stages {
+    stage('Checkout Release Tag') {
+      when {
+        expression { return params.RELEASE_BUILD }
+      }
+      steps {
+        script {
+          String repoURL = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
+          String closestTag = sh(script: "git describe --abbrev=0", returnStdout: true).trim()
+          steps.checkout([$class: 'GitSCM',
+            branches: [[name: "refs/tags/${closestTag}"]],
+            extensions: [[$class: 'LocalBranch', localBranch: "**"]],
+            gitTool: 'Default',
+            userRemoteConfigs: [[credentialsId: 'pipelines-token', url: repoURL]]
+          ])
+        }
+      }
+    }
     stage('Build') {
       steps {
         script {
