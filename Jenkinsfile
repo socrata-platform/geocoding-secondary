@@ -8,6 +8,7 @@ String lastStage
 // Utility Libraries
 def sbtbuild = new com.socrata.SBTBuild(steps, service, project_wd)
 def dockerize = new com.socrata.Dockerize(steps, service, BUILD_NUMBER)
+def semVerTag = new com.socrata.SemVerTag(steps)
 
 pipeline {
   options {
@@ -36,14 +37,8 @@ pipeline {
       }
       steps {
         script {
-          String repoURL = sh(script: "git config --get remote.origin.url", returnStdout: true).trim()
-          String closestTag = sh(script: "git describe --abbrev=0", returnStdout: true).trim()
-          steps.checkout([$class: 'GitSCM',
-            branches: [[name: "refs/tags/${closestTag}"]],
-            extensions: [[$class: 'LocalBranch', localBranch: "**"]],
-            gitTool: 'Default',
-            userRemoteConfigs: [[credentialsId: 'pipelines-token', url: repoURL]]
-          ])
+          lastStage = env.STAGE_NAME
+          semVerTag.checkoutClosestTag()
         }
       }
     }

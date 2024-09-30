@@ -200,3 +200,11 @@ To run the tests
 ```
 sbt test
 ```
+
+## Releases
+
+To tag a release to be built and deployed to RC:
+
+1. Create a branch from main and run `sbt release`.
+1. Follow the prompts to bump the version, which will create two commits.
+1. Create a PR and get it merged to main.
