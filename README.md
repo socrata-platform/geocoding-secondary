@@ -200,9 +200,3 @@ To run the tests
 ```
 sbt test
 ```
-
-## Releases
-
-To tag a release to be built and deployed to RC:
-
-1. On main, run `sbt release`. This will create two commits to bump the version and create a git tag for the release version and then push them to the remote repo.
