@@ -31,11 +31,11 @@ instances {
           maxIdleTimeExcessConnections = 300
         }
         include "/dev/shm/secondary-watcher-geocoding-pg-cache-secrets.conf"
-        host = {{ DI2_DB_HOST }}
-        port = {{ DI2_DB_PORT }}
-        database = {{ DI2_DB_NAME }}
-        username = {{ DI2_DB_USER }}
-        password = {{ DI2_DB_PASSWORD }}
+        host = "{{ DI2_DB_HOST }}"
+        port = "{{ DI2_DB_PORT }}"
+        database = "{{ DI2_DB_NAME }}"
+        username = "{{ DI2_DB_USER }}"
+        password = "{{ DI2_DB_PASSWORD }}"
       }
 
       geocoder {
