@@ -7,7 +7,7 @@ export UUID=$(cat /proc/sys/kernel/random/uuid)
 
 /bin/env_parse ${SECONDARY_CONFIG}.j2
 
-exec su socrata -c '/usr/bin/java \
+exec su socrata -c 'exec /usr/bin/java \
     -Xmx${JAVA_XMX} \
     -Xms${JAVA_XMX} \
     -Dconfig.file=${SERVER_ROOT}/${SERVER_CONFIG} \
