@@ -1,11 +1,17 @@
-@Library('socrata-pipeline-library@0.0.1') _
+@Library('socrata-pipeline-library@3.2.0') _
 
-commonServicePipeline(
+commonPipeline(
   defaultBuildWorker: 'build-worker',
-  deploymentEcosystem: 'marathon-mesos',
-  instanceNamePattern: 'secondary-watcher-geocoding*',
+  jobName: 'secondary-watcher-geocoding',
   language: 'scala',
   languageVersion: '2.12',
-  projectName: 'secondary-watcher-geocoding',
+  projects: [
+    [
+      name: 'secondary-watcher-geocoding',
+      deploymentEcosystem: 'marathon-mesos',
+      marathonInstanceNamePattern: 'secondary-watcher-geocoding*',
+      type: 'service',
+    ]
+  ],
   teamsChannelWebhookId: 'WORKFLOW_IQ',
 )
