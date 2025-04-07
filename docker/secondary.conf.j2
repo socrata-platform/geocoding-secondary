@@ -51,6 +51,8 @@ instances {
           # or an env var splice at the typesafe-confg level).  But's
           # just the app token, whicever backend is being used.
           {{ MAPQUEST_APP_TOKEN_LINE }}
+          app-token = ${?GEOCODING_APP_TOKEN}
+
           retry-count = 5
 
           # these only has an effect if type is esri
