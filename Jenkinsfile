@@ -1,15 +1,17 @@
-@Library('socrata-pipeline-library@3.2.0') _
+@Library('socrata-pipeline-library@6.0.0') _
 
 commonPipeline(
-  defaultBuildWorker: 'build-worker',
   jobName: 'secondary-watcher-geocoding',
   language: 'scala',
-  languageVersion: '2.12',
   projects: [
     [
       name: 'secondary-watcher-geocoding',
+      compiled: true,
       deploymentEcosystem: 'marathon-mesos',
       marathonInstanceNamePattern: 'secondary-watcher-geocoding*',
+      paths: [
+        dockerBuildContext: 'docker',
+      ],
       type: 'service',
     ]
   ],
