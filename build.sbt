@@ -57,3 +57,5 @@ releaseVersion := { lastVerRaw =>
 releaseNextVersion := { lastVer => lastVer + "-DEVELOPMENT" }
 
 releaseProcess := releaseProcess.value.filterNot(Set(ReleaseTransformations.publishArtifacts))
+
+assembly/assemblyJarName := s"${name.value}-assembly.jar"
