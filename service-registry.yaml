@@ -23,6 +23,7 @@ metadata:
     backstage.io/techdocs-ref: dir:.
   tags:
     - scala
+    - marathon
 spec:
   type: service
   owner: egress
