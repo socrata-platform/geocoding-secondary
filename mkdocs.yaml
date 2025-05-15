@@ -1,0 +1,4 @@
+site_name: 'geocoding-secondary'
+docs_dir: '.'
+nav:
+  - Home: README.md
