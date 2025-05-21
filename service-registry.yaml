@@ -8,22 +8,18 @@ metadata:
     secondary-watcher. But instead of writing to its own store, it _feeds back_
     its computations to truth by posting mutation scripts to data-coordinator.
   links:
-  - title: OpsDoc
-    url: "https://socrata.atlassian.net/wiki/spaces/ONCALL/pages/2158624990/OpsDoc+-+Geocoding+Secondary"
-  - title: Teams Channel
-    url: "https://teams.microsoft.com/l/channel/19%3Acc7bc69e4e1349c98d6de53dea8fcd97%40thread.tacv2/egress-q-and-a?groupId=102da3ef-c928-4a59-afe5-f0d51e6443dd&tenantId=7cc5f0f9-ee5b-4106-a62d-1b9f7be46118"
-  - title: "What is a Feedback Secondary?"
-    url: "https://socrata.atlassian.net/wiki/spaces/PD/pages/2489122844/Feedback+Secondary+Design"
-  - title: "Secondary interface"
-    url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Secondary.scala"
-  - title: "Event definitions"
-    url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Event.scala"
+    - title: "Ops Doc"
+      url: "https://socrata.atlassian.net/wiki/spaces/ONCALL/pages/2158624990/OpsDoc+-+Geocoding+Secondary"
+    - title: "What is a Feedback Secondary?"
+      url: "https://socrata.atlassian.net/wiki/spaces/PD/pages/2489122844/Feedback+Secondary+Design"
+    - title: "Secondary interface"
+      url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Secondary.scala"
+    - title: "Event definitions"
+      url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Event.scala"
   annotations:
     github.com/project-slug: socrata-platform/geocoding-secondary
     backstage.io/techdocs-ref: dir:.
-  tags:
-    - scala
-    - marathon
+    infrastructure: apps-marathon:secondary-watcher-geocoding
 spec:
   type: service
   owner: egress
