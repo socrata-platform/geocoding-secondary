@@ -1,0 +1,26 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: geocoding-secondary
+  description: |
+    Asynchronous NBE geocoding and region coding service. Geocoding-secondary
+    is a feedback secondary. Like other secondaries it runs as an instance of
+    secondary-watcher. But instead of writing to its own store, it _feeds back_
+    its computations to truth by posting mutation scripts to data-coordinator.
+  links:
+    - title: "Ops Doc"
+      url: "https://socrata.atlassian.net/wiki/spaces/ONCALL/pages/2158624990/OpsDoc+-+Geocoding+Secondary"
+    - title: "What is a Feedback Secondary?"
+      url: "https://socrata.atlassian.net/wiki/spaces/PD/pages/2489122844/Feedback+Secondary+Design"
+    - title: "Secondary interface"
+      url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Secondary.scala"
+    - title: "Event definitions"
+      url: "https://github.com/socrata-platform/data-coordinator/blob/main/coordinatorlib/src/main/scala/com/socrata/datacoordinator/secondary/Event.scala"
+  annotations:
+    github.com/project-slug: socrata-platform/geocoding-secondary
+    backstage.io/techdocs-ref: dir:.
+    infrastructure: apps-marathon:secondary-watcher-geocoding
+spec:
+  type: service
+  owner: egress
+  lifecycle: production
