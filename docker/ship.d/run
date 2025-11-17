@@ -3,6 +3,11 @@ set -ev
 
 export UUID=$(cat /proc/sys/kernel/random/uuid)
 
+if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
+    ARK_HOST="$(curl -sf "$ECS_CONTAINER_METADATA_URI_V4" | jq -r '.Networks[0].IPv4Addresses[0]')"
+    export ARK_HOST
+fi
+
 /bin/env_parse ${SERVER_CONFIG}.j2
 
 /bin/env_parse ${SECONDARY_CONFIG}.j2
