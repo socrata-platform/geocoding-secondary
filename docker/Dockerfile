@@ -4,6 +4,8 @@ FROM socrata/java8-focal
 ENV JMX_PORT 6299
 EXPOSE 6299
 
+RUN apt-get -y update && apt-get -y install jq
+
 ENV SERVER_ROOT /srv/secondary-watcher
 ENV SERVER_ARTIFACT secondary-watcher-geocoding-assembly.jar
 ENV SERVER_CONFIG secondary-watcher.conf
