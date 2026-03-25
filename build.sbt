@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "com.socrata" %% "geocoders" % "4.2.1",
   "com.socrata" %% "secondarylib-feedback" % "4.2.18" exclude("org.slf4j", "slf4j-log4j12"),
   "com.socrata" %% "socrata-http-server" % "3.16.5-jdk11", // we are just using RequestId from this
+  "com.socrata" %% "socrata-http-client" % "3.16.5-jdk11",
   "com.socrata" %% "socrata-curator-utils" % "1.2.0",
   "com.socrata" %% "socrata-thirdparty-utils" % "5.0.0",
   "com.socrata" %% "soql-types" % "4.0.3",
