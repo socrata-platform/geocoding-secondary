@@ -3,6 +3,7 @@
 commonPipeline(
     jobName: 'secondary-watcher-geocoding',
     language: 'scala',
+    defaultBuildWorker: 'worker-java-multi-pg13',
     projects: [
         [
           name: 'secondary-watcher-geocoding',
